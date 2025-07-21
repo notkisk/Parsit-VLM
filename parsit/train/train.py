@@ -25,6 +25,7 @@ from transformers import AutoConfig
 from torch.utils.data import Dataset
 from parsit.constants import IGNORE_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN, IMAGE_TOKEN_INDEX
 from parsit.train.parsit_trainer import ParsitTrainer
+from parsit.train.data import LazySupervisedDataset, DataCollatorForSupervisedDataset, make_supervised_data_module
 
 from parsit import conversation as conversation_lib
 from parsit.model import *
