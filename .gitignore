@@ -1,0 +1,16 @@
+# Local data and logs
+/LLaVA-Pretrain/
+/llava_pretrain_data/
+/wandb/
+output*/
+checkpoints/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE files
+.vscode/
+.idea/

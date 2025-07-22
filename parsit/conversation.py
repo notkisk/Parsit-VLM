@@ -13,6 +13,7 @@ class SeparatorStyle(Enum):
 
     CHATML = auto()
     QWEN = auto()
+    PLAIN = auto()
 
 
 @dataclasses.dataclass
