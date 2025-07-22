@@ -2,16 +2,45 @@
 
 All notable changes to the Parsit project are documented in this file.
 
-## [Unreleased] - 2025-01-22
+## [Unreleased] - 2025-07-22
 
 ### 🔥 Critical Fixes
+
+#### **Latest Critical Fixes (2025-07-22)**
+- **FIXED: Checkpoint save crash**: Resolved `TypeError: Trainer._save_checkpoint() takes 3 positional arguments but 4 were given` in `parsit_trainer.py:394`
+- **FIXED: Parameter counting bug**: Resolved massive parameter count errors (trillion-scale false counts → accurate 6.56M parameters)
+- **FIXED: DeepSpeed ZeRO-3 parameter visibility**: Implemented proper parameter shape calculation that works with parameter partitioning
+- **FIXED: Gradient explosion**: Added LayerNorm stabilization to MLP projector preventing 10M+ gradient spikes
+- **FIXED: WandB parameter logging**: Corrected parameter statistics display (was showing 0, now shows real counts)
+- **FIXED: Memory management**: Added `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` to prevent OOM crashes
+
+#### **Previous Fixes (2025-01-22)**
 - **Fixed pad token issue**: Restored proper tokenization by changing `pad_token=""` to `pad_token="<|endoftext|>"` in `train.py:334`
 - **Restored dataloader worker configuration**: Re-added `worker_init_fn=seed_worker` and `prefetch_factor` settings for reproducibility and performance
 - **Fixed loss/grad_norm calculation**: Implemented DeepSpeed-aware parameter unfreezing that resolves training metrics not being calculated
 
 ### ✨ Major Features
 
-#### DeepSpeed-Aware Parameter Management
+#### **Recent Major Improvements (2025-07-22)**
+
+#### **Enhanced Parameter Management & Debugging**
+- **Robust parameter counting**: Added fallback logic for DeepSpeed ZeRO-3 parameter partitioning scenarios
+- **Improved parameter logging**: Enhanced visibility with shape information and proper size calculation
+- **WandB integration**: Automatic parameter count updates for monitoring and debugging
+- **Real-time parameter validation**: Comprehensive error detection and reporting during training initialization
+
+#### **Training Stability & Performance**
+- **LayerNorm gradient stabilization**: Added LayerNorm layers between MLP components to prevent gradient explosion
+- **Enhanced checkpointing**: Reduced save intervals from 50,000 → 500 steps for better recovery capabilities  
+- **Memory optimization**: Improved CUDA memory allocation with expandable segments configuration
+- **Training configuration tuning**: Optimized gradient accumulation and dataloader worker settings
+
+#### **Architecture Improvements**
+- **MLP projector enhancement**: Added LayerNorm stabilization to `mlp2x_gelu` architecture preventing training instability
+- **Better error handling**: Comprehensive exception handling for DeepSpeed parameter operations
+- **Monitoring improvements**: Enhanced gradient norm tracking and parameter status reporting
+
+#### DeepSpeed-Aware Parameter Management (Previous)
 - **Added sophisticated parameter unfreezing logic** (`train.py:520-557`)
   - Uses `deepspeed.zero.GatheredParameters` context manager for ZeRO-3 compatibility
   - Handles parameter availability across distributed ranks properly

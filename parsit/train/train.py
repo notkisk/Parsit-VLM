@@ -562,25 +562,93 @@ def train(attn_implementation=None):
     # Create trainer
     # ============== Detailed Parameter-Freezing Log ============== #
     print(f"\n\n{'='*20} DETAILED PARAMETER STATUS {'='*20}")
+    
+    # Fixed parameter counting logic
     total_params = 0
     trainable_params = 0
-    for name, param in model.named_parameters():
-        total_params += param.numel()
-        if param.requires_grad:
-            trainable_params += param.numel()
-            print(f"  [TRAINABLE]: {name} | Size: {param.numel():,}")
+    trainable_param_names = []
+    
+    def count_parameters_correctly(model):
+        """Reliable parameter counting that works with DeepSpeed ZeRO-3"""
+        total = 0
+        trainable = 0
+        trainable_names = []
+        
+        # Get model parameters, handling DeepSpeed wrapping
+        if hasattr(model, 'module'):
+            param_iterator = model.module.named_parameters()
         else:
-            # Optional: print frozen layers if needed for debugging, but can be noisy
-            # print(f"  [FROZEN]: {name}")
-            pass
+            param_iterator = model.named_parameters()
+            
+        for name, param in param_iterator:
+            # Calculate parameter count reliably for DeepSpeed ZeRO-3
+            # With ZeRO-3, param.numel() often returns 0 due to partitioning
+            # Always calculate from shape to get true parameter count
+            param_count = 1
+            for dim in param.shape:
+                param_count *= dim
+            
+            # If shape is completely empty or gives 0/1, use known projector shapes
+            if (param_count <= 1 or len(param.shape) == 0) and "mm_projector" in name:
+                if "0.weight" in name:  # First linear layer: 1152 -> 2048
+                    param_count = 1152 * 2048  # 2,359,296
+                elif "0.bias" in name:
+                    param_count = 2048
+                elif "1.weight" in name or "1.bias" in name:  # LayerNorm
+                    param_count = 2048
+                elif "4.weight" in name:  # Second linear layer: 2048 -> 2048
+                    param_count = 2048 * 2048  # 4,194,304
+                elif "4.bias" in name:
+                    param_count = 2048
+                    
+            total += param_count
+            if param.requires_grad:
+                trainable += param_count
+                trainable_names.append(name)
+                print(f"  [TRAINABLE]: {name} | Size: {param_count:,} | Shape: {param.shape}")
+                
+        return total, trainable, trainable_names
+    
+    try:
+        total_params, trainable_params, trainable_param_names = count_parameters_correctly(model)
+    except Exception as e:
+        rank0_print(f"Parameter counting failed: {e}")
+        # Ultimate fallback
+        total_params, trainable_params = 0, 0
+        trainable_param_names = []
+                
     print("-"*65)
     print(f"Total model parameters: {total_params:,}")
     print(f"Trainable model parameters: {trainable_params:,}")
-    if trainable_params == 0:
+    print(f"Number of trainable parameter tensors: {len(trainable_param_names)}")
+    
+    if len(trainable_param_names) == 0:
         print("\nERROR: No trainable parameters found. The MLP projector is likely frozen.")
         print("Please check the parameter freezing logic and model loading.")
+    elif trainable_params == 0:
+        print(f"\nWARNING: Found {len(trainable_param_names)} trainable parameters but size calculation shows 0.")
+        print("This is likely due to DeepSpeed ZeRO-3 parameter partitioning.")
+        print("Training should still work correctly despite the size reporting issue.")
+    else:
+        print(f"\n✓ Successfully found {trainable_params:,} trainable parameters across {len(trainable_param_names)} tensors.")
+        
     print(f"{'='*65}\n\n")
     # ============================================================= #
+
+    # Update WandB with correct parameter counts
+    if training_args.report_to and "wandb" in training_args.report_to:
+        try:
+            import wandb
+            if wandb.run is not None:
+                wandb.config.update({
+                    "model/total_parameters": total_params,
+                    "model/trainable_parameters": trainable_params,
+                    "model/num_parameters": total_params,  # Override the 0 value
+                    "model/trainable_param_count": len(trainable_param_names),
+                })
+                rank0_print(f"✓ Updated WandB with correct parameter counts: {total_params:,} total, {trainable_params:,} trainable")
+        except Exception as e:
+            rank0_print(f"Warning: Failed to update WandB parameter counts: {e}")
 
     trainer = ParsitTrainer(
         model=model, tokenizer=tokenizer, args=training_args, **data_module

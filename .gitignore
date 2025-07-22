@@ -17,6 +17,10 @@ __pycache__/
 
 # Exclude egg-info build artifacts
 parsit.egg-info/
-LLaVA-Pretrain
-mlp-pretrain
-parsit.egg-info
+
+# Exclude specific directories and files
+LLaVA-Pretrain/
+mlp-pretrain/
+parsit.egg-info/
+mlp-projector-pretrain
+wandb/

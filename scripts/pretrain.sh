@@ -4,6 +4,10 @@ export NCCL_IB_DISABLE=0
 export NCCL_IB_GID_INDEX=3
 export NCCL_SOCKET_IFNAME=eth0
 
+# Memory management for CUDA OOM prevention
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+export CUDA_LAUNCH_BLOCKING=1
+
 # # Check if running from repo root (should find 'parsit/pyproject.toml')
 # if [ ! -f "parsit/pyproject.toml" ]; then
 #   echo "Error: Please run this script from the repository root directory (where 'parsit/pyproject.toml' exists)."
@@ -27,8 +31,8 @@ echo "BASE_RUN_NAME: ${BASE_RUN_NAME}"
 REPO_ROOT="$(pwd)"
 TRAIN_SCRIPT="$REPO_ROOT/parsit/train/train.py"
 DEEPSPEED_CONFIG="$REPO_ROOT/scripts/zero3.json"
-DATA_PATH="$REPO_ROOT/LLaVA-Pretrain/blip_laion_cc_sbu_558k.json"
-IMAGE_FOLDER="$REPO_ROOT/LLaVA-Pretrain"
+DATA_PATH="$REPO_ROOT/mlp-projector-pretrain/blip_laion_cc_sbu_558k_subset_5k.json" 
+IMAGE_FOLDER="$REPO_ROOT/mlp-projector-pretrain/images"
 
 ACCELERATE_CPU_AFFINITY=1 torchrun --standalone --nproc_per_node=$NUM_GPUS \
     "$TRAIN_SCRIPT" \
@@ -50,7 +54,7 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --standalone --nproc_per_node=$NUM_GPUS \
     --per_device_eval_batch_size 4 \
     --gradient_accumulation_steps 2 \
     --save_strategy "steps" \
-    --save_steps 50000 \
+    --save_steps 500 \
     --learning_rate 1e-3 \
     --weight_decay 0. \
     --warmup_ratio 0.03 \
@@ -60,7 +64,7 @@ ACCELERATE_CPU_AFFINITY=1 torchrun --standalone --nproc_per_node=$NUM_GPUS \
     --tf32 True \
     --model_max_length 8192 \
     --gradient_checkpointing True \
-    --dataloader_num_workers 16 \
+    --dataloader_num_workers 12 \
     --lazy_preprocess True \
     --report_to wandb \
     --run_name "$BASE_RUN_NAME" \

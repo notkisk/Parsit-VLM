@@ -391,4 +391,4 @@ class ParsitTrainer(Trainer):
                 model.config.save_pretrained(output_dir)
                 torch.save(weight_to_save, os.path.join(output_dir, f"mm_projector.bin"))
         else:
-            super(ParsitTrainer, self)._save_checkpoint(model, trial, metrics)
+            super(ParsitTrainer, self)._save_checkpoint(model, trial)
