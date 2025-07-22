@@ -331,7 +331,7 @@ def get_model(model_args, training_args, bnb_model_from_pretrained_args):
 
     if tokenizer.pad_token is None:
         smart_tokenizer_and_embedding_resize(
-            special_tokens_dict=dict(pad_token=""),
+            special_tokens_dict=dict(pad_token="<|endoftext|>"),
             tokenizer=tokenizer,
             model=model,
         )
