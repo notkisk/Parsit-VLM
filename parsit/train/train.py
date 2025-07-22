@@ -389,6 +389,9 @@ def train(attn_implementation=None):
     parser = transformers.HfArgumentParser((ModelArguments, DataArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
+    # TODO: Refactor argument handling to properly separate multimodal arguments into their respective classes (ModelArguments vs DataArguments).
+    # This hack copies multimodal arguments from ModelArguments to DataArguments, causing tight coupling and reducing maintainability.
+    # See below for the current workaround:
     # HACK: This is a hack to get around the fact that the original authors put all the multimodal arguments in ModelArguments, but the
     # data processing code expects them to be in DataArguments. This is a minimal change to get the code running without a major refactoring.
     data_args.mm_use_im_start_end = model_args.mm_use_im_start_end
