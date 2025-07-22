@@ -36,13 +36,19 @@ Parsit is designed for document analysis tasks including:
 | Model | Parameters | Vision Encoder | Recommended Use |
 |-------|------------|----------------|-----------------|
 | parsit-qwen3-1.7b | 1.7B | SigLIP-2-400M | Fast inference, lightweight deployment |
-| parsit-qwen3-3b | 3B | SigLIP-2-400M | Balanced performance and efficiency |
 
 ### Architecture
 
 ```
-Document Image → SigLIP-2 Encoder → MLP Projector → Qwen3 LLM → Text Response
+Document Image → SigLIP-2 Encoder → MLP Projector → Qwen3-1.7B LLM → Text Response
 ```
+
+### Training Infrastructure
+
+- **Pre-training**: Vision-language alignment with SigLIP-2 encoder
+- **Fine-tuning**: Instruction tuning for document analysis tasks
+- **DeepSpeed**: ZeRO-2/ZeRO-3 support for efficient multi-GPU training
+- **Data Processing**: Advanced dataset handling with YAML configuration support
 
 ## Example Usage
 

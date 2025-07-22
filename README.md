@@ -1,11 +1,11 @@
 # Parsit: Vision-Language Model for Document Analysis
 
-Parsit is a specialized vision-language model designed for document analysis tasks. Built on top of the LLaVA-NeXT architecture, Parsit combines **Qwen2.5 language models** with **SigLIP-2 vision encoders** to provide state-of-the-art performance on document understanding, OCR, and analysis tasks.
+Parsit is a specialized vision-language model designed for document analysis tasks. Built on top of the LLaVA-NeXT architecture, Parsit combines **Qwen3-1.7B language models** with **SigLIP vision encoders** to provide state-of-the-art performance on document understanding, OCR, and analysis tasks.
 
 ## Features
 
 - **Document-Focused Architecture**: Optimized specifically for document analysis (no video processing)
-- **Modern Components**: Qwen2.5 LLM + SigLIP-2 vision encoder + MLP projector
+- **Modern Components**: Qwen3-1.7B LLM + SigLIP vision encoder + MLP projector
 - **Flexible Training**: Support for full fine-tuning, LoRA, and various training configurations
 - **Easy Inference**: Simple Python API for document analysis and text extraction
 - **Comprehensive Evaluation**: Built-in metrics for QA accuracy and OCR performance
@@ -67,23 +67,30 @@ processor.process_ocr_dataset(ocr_data, "ocr_dataset.json")
 ### Training Scripts
 
 ```bash
-# Full fine-tuning
-bash scripts/train_parsit_documents.sh
+# Pre-training (vision-language alignment)
+bash scripts/pretrain.sh
+
+# Fine-tuning (instruction following)
+bash scripts/finetune.sh
 
 # LoRA training (memory efficient)
 bash scripts/train_lora.sh
+
+# Full document training
+bash scripts/train_parsit_documents.sh
 ```
 
 ## Model Architecture
 
 ```
-Document Image → SigLIP-2 Encoder → MLP Projector → Qwen2.5 LLM → Text Response
+Document Image → SigLIP-2 Encoder → MLP Projector → Qwen3-1.7B LLM → Text Response
 ```
 
 ### Components
 - **Vision Encoder**: SigLIP-2 (google/siglip-so400m-patch14-384)  
-- **Language Model**: Qwen2.5 (1.5B/7B/14B variants supported)
-- **Projector**: Configurable MLP (linear, mlp2x_gelu, etc.)
+- **Language Model**: Qwen3-1.7B-Instruct
+- **Projector**: 2-layer MLP with GELU activation (mlp2x_gelu)
+- **DeepSpeed**: ZeRO-2 and ZeRO-3 configurations for efficient training
 
 ## Evaluation
 
@@ -149,5 +156,5 @@ This project builds upon LLaVA-NeXT and follows the same licensing terms.
 ## Acknowledgments
 
 - Built on [LLaVA-NeXT](https://github.com/LLaVA-VL/LLaVA-NeXT) architecture
-- Uses [Qwen2.5](https://github.com/QwenLM/Qwen2.5) language models  
-- Powered by [SigLIP](https://github.com/google-research/big_vision) vision encoder
+- Uses [Qwen3-1.7B](https://huggingface.co/Qwen/Qwen3-1.7B-Instruct) language model  
+- Powered by [SigLIP-2](https://github.com/google-research/big_vision) vision encoder
