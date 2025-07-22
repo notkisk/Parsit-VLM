@@ -4,11 +4,11 @@ export NCCL_IB_DISABLE=0
 export NCCL_IB_GID_INDEX=3
 export NCCL_SOCKET_IFNAME=eth0
 
-# Check if running from repo root (should find 'parsit/pyproject.toml')
-if [ ! -f "parsit/pyproject.toml" ]; then
-  echo "Error: Please run this script from the repository root directory (where 'parsit/pyproject.toml' exists)."
-  exit 1
-fi
+# # Check if running from repo root (should find 'parsit/pyproject.toml')
+# if [ ! -f "parsit/pyproject.toml" ]; then
+#   echo "Error: Please run this script from the repository root directory (where 'parsit/pyproject.toml' exists)."
+#   exit 1
+# fi
 
 LLM_VERSION="Qwen/Qwen3-1.7B"
 LLM_VERSION_CLEAN="${LLM_VERSION//\//_}"

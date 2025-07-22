@@ -17,3 +17,6 @@ __pycache__/
 
 # Exclude egg-info build artifacts
 parsit.egg-info/
+LLaVA-Pretrain
+mlp-pretrain
+parsit.egg-info
