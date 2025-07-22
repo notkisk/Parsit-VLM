@@ -3,10 +3,12 @@ from huggingface_hub import hf_hub_download
 
 def download_llava_pretrain(save_dir="./llava_pretrain_data"):
     """
-    Downloads the LLaVA-Pretrain dataset from Hugging Face.
-
-    Args:
-        save_dir (str): The directory to save the dataset to.
+    Download the LLaVA-Pretrain dataset files from Hugging Face into a specified directory.
+    
+    Creates the target directory if it does not exist, then downloads both the metadata JSON file and the images archive from the "liuhaotian/LLaVA-Pretrain" repository to the given location. Prints the local paths of the downloaded files and provides instructions for further setup.
+    
+    Parameters:
+        save_dir (str): Directory where the dataset files will be saved. Defaults to "./llava_pretrain_data".
     """
     os.makedirs(save_dir, exist_ok=True)
 
