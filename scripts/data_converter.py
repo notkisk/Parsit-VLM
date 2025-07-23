@@ -19,16 +19,15 @@ from pathlib import Path
 
 def convert_to_parsit_format(conversations: List[Dict[str, str]]) -> List[Dict[str, str]]:
     """
-    Convert conversation format to Parsit-compatible format.
+    Converts a list of conversation turns to Parsit-compatible format by normalizing role names.
     
-    Input format should be:
-    [
-        {"from": "human", "value": "<image>\nQuestion about the image"},
-        {"from": "gpt", "value": "Answer about the image"}
-    ]
+    Each turn's "from" field is mapped to either "human" or "gpt" based on known role aliases. Turns with unrecognized roles are skipped with a warning.
     
-    This format is already compatible with Parsit, but this function
-    ensures consistency and can handle minor variations.
+    Parameters:
+        conversations (List[Dict[str, str]]): List of conversation turns, each with "from" and "value" fields.
+    
+    Returns:
+        List[Dict[str, str]]: The converted list of conversation turns in Parsit format.
     """
     converted = []
     
@@ -66,9 +65,12 @@ def convert_to_parsit_format(conversations: List[Dict[str, str]]) -> List[Dict[s
 
 def convert_llava_to_parsit(data_item: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Convert LLaVA-style data to Parsit format.
+    Converts a single LLaVA-format data item to Parsit format.
     
-    LLaVA format typically has 'conversations' key with role-value pairs.
+    The function processes the "conversations" field, normalizing role names to "human" or "gpt" as required by Parsit. All other fields in the input item (such as "image" or "id") are preserved in the output. Raises a ValueError if the "conversations" key is missing.
+    
+    Returns:
+        A dictionary representing the data item in Parsit format.
     """
     if "conversations" in data_item:
         # Already in conversation format, just ensure role names are correct
@@ -90,9 +92,13 @@ def convert_llava_to_parsit(data_item: Dict[str, Any]) -> Dict[str, Any]:
 
 def convert_sharegpt_to_parsit(data_item: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Convert ShareGPT-style data to Parsit format.
+    Converts a ShareGPT-style data item to Parsit format by normalizing conversation roles and preserving additional metadata.
     
-    ShareGPT typically uses different field names.
+    Parameters:
+        data_item (Dict[str, Any]): A dictionary representing a ShareGPT conversation, expected to contain a "conversations" list.
+    
+    Returns:
+        Dict[str, Any]: The data item converted to Parsit format, with roles mapped to "human" or "gpt" and all other metadata retained.
     """
     conversations = []
     
@@ -124,7 +130,12 @@ def convert_sharegpt_to_parsit(data_item: Dict[str, Any]) -> Dict[str, Any]:
 
 def validate_parsit_format(data_item: Dict[str, Any]) -> bool:
     """
-    Validate that data item is in correct Parsit format.
+    Checks whether a data item conforms to the Parsit conversation format.
+    
+    A valid Parsit data item must contain a non-empty "conversations" list of dictionaries, each with "from" ("human" or "gpt") and "value" fields. The roles must alternate between "human" and "gpt", starting with either role.
+    
+    Returns:
+        bool: True if the data item is valid Parsit format, False otherwise.
     """
     if "conversations" not in data_item:
         return False
@@ -157,7 +168,9 @@ def validate_parsit_format(data_item: Dict[str, Any]) -> bool:
 
 def process_dataset(input_file: str, output_file: str, input_format: str = "auto"):
     """
-    Process entire dataset file.
+    Converts an input dataset file to Parsit format and saves the result to an output file.
+    
+    Reads a dataset in JSON or JSONL format, detects or uses the specified input format ("auto", "llava", "sharegpt", or "parsit"), converts each data item to Parsit format, validates the result, and writes the successfully converted items to the output file. Items that fail conversion or validation are skipped. Creates output directories as needed.
     """
     print(f"Loading dataset from {input_file}")
     
@@ -226,6 +239,11 @@ def process_dataset(input_file: str, output_file: str, input_format: str = "auto
 
 
 def main():
+    """
+    Parses command-line arguments and executes dataset conversion or validation.
+    
+    Runs as the script entry point, handling input/output file paths, input format selection, and an optional validation-only mode. If validation-only is specified, checks each item in the input dataset for Parsit format conformity and reports results. Otherwise, converts the dataset to Parsit format and saves the output.
+    """
     parser = argparse.ArgumentParser(description="Convert datasets to Parsit-compatible format")
     parser.add_argument("--input", "-i", required=True, help="Input dataset file (.json or .jsonl)")
     parser.add_argument("--output", "-o", required=True, help="Output dataset file (.json or .jsonl)")

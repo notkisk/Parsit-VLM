@@ -384,6 +384,17 @@ def get_model(model_args, training_args, bnb_model_from_pretrained_args):
 
 
 def train(attn_implementation=None):
+    """
+    Trains a multimodal Qwen-based language model with configurable vision and language components, LoRA adapters, and DeepSpeed optimization.
+    
+    This function parses model, data, and training arguments; configures quantization and gradient checkpointing; loads and prepares the model and tokenizer; applies LoRA adapters if enabled; initializes and configures vision modules for multimodal training; freezes and selectively unfreezes model parameters based on user-specified tunable parts using DeepSpeed ZeRO context; prepares supervised datasets; logs detailed parameter status; and launches training with checkpointing and safe model saving.
+    
+    Parameters:
+        attn_implementation (str, optional): Specifies the attention implementation to use. If None, uses the default.
+    
+    Returns:
+        None
+    """
     global local_rank
 
     parser = transformers.HfArgumentParser((ModelArguments, DataArguments, TrainingArguments))
@@ -684,10 +695,21 @@ class LazySupervisedDataset(Dataset):
         self.data_args = data_args
 
     def __len__(self):
+        """
+        Return the number of samples in the dataset.
+        """
         return len(self.list_data_dict)
 
     def __getitem__(self, i) -> Dict[str, torch.Tensor]:
         # Check for malformed data and skip if necessary
+        """
+        Retrieves and processes a single data sample for supervised multimodal training, handling both text and image inputs.
+        
+        If the sample includes an image, loads and preprocesses the image according to the specified aspect ratio and processor settings. If the sample is malformed or missing required keys, recursively fetches the next valid sample. For multimodal models without an image, returns a zero tensor as a placeholder image.
+        
+        Returns:
+            dict: A dictionary containing input IDs, labels, and an image tensor (real or placeholder).
+        """
         if 'conversations' not in self.list_data_dict[i]:
             return self.__getitem__((i + 1) % len(self.list_data_dict))
         sources = self.list_data_dict[i]
@@ -847,6 +869,18 @@ def preprocess_qwen(
     tokenizer: transformers.PreTrainedTokenizer,
     has_image: bool = False,
 ) -> Dict:
+    """
+    Preprocesses a batch of conversations in Qwen's ChatML format for supervised fine-tuning.
+    
+    Converts structured conversation data into tokenized input and label tensors, applying masking so that only assistant (gpt) responses are included in the loss calculation. Supports both text-only and multimodal (image) prompts. Handles prompt formatting, tokenization, and label masking according to the ChatML separator style.
+    
+    Parameters:
+        sources (list): List of conversation sources, each as a list of message dicts with 'from' and 'value' keys.
+        has_image (bool): If True, processes prompts with image tokens using a special tokenizer.
+    
+    Returns:
+        dict: Dictionary containing 'input_ids' and 'labels' tensors for model input and supervised training.
+    """
     conv = conversation_lib.default_conversation.copy()
     roles = {"human": conv.roles[0], "gpt": conv.roles[1]}
 

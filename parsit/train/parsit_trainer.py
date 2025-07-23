@@ -159,6 +159,11 @@ class LengthGroupedSampler(Sampler):
         return len(self.lengths)
 
     def __iter__(self):
+        """
+        Returns an iterator over dataset indices grouped according to the configured batching strategy.
+        
+        Depending on the sampler's settings, indices are grouped by variable length, modality, or standard length grouping to optimize batch composition for training.
+        """
         if self.variable_length:
             indices = get_variable_length_grouped_indices(self.lengths, self.batch_size, self.world_size, generator=self.generator)
         elif self.group_by_modality:
@@ -174,6 +179,11 @@ class ParsitTrainer(Trainer):
 
 
     def create_accelerator_and_postprocess(self):
+        """
+        Initializes the Accelerator with custom plugins and configures distributed training flags.
+        
+        Sets up the Accelerator with a custom gradient accumulation plugin and extended NCCL timeout. Updates internal flags for DeepSpeed, FSDP, and tensor parallelism based on the accelerator state. Applies FSDP plugin options from training arguments, including activation checkpointing with conflict checks. Propagates arguments to DeepSpeed if enabled and no Hugging Face DeepSpeed config is provided.
+        """
         grad_acc_kwargs = {"num_steps": self.args.gradient_accumulation_steps}
         grad_acc_kwargs["sync_with_dataloader"] = False
         gradient_accumulation_plugin = GradientAccumulationPlugin(**grad_acc_kwargs)
