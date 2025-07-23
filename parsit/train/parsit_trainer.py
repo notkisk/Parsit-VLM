@@ -8,9 +8,10 @@ from accelerate.utils import InitProcessGroupKwargs, GradientAccumulationPlugin
 from torch.utils.data import Dataset, Sampler, DataLoader
 
 from transformers import Trainer
-from transformers.trainer import is_sagemaker_mp_enabled, get_parameter_names, has_length, ALL_LAYERNORM_LAYERS, logger, is_accelerate_available, is_datasets_available, GradientAccumulationPlugin
+from transformers.trainer import is_sagemaker_mp_enabled, has_length, logger, is_accelerate_available, is_datasets_available
+from transformers.pytorch_utils import ALL_LAYERNORM_LAYERS
 from transformers.trainer_utils import seed_worker
-from transformers.trainer_pt_utils import get_length_grouped_indices as get_length_grouped_indices_hf
+from transformers.trainer_pt_utils import get_length_grouped_indices as get_length_grouped_indices_hf, get_parameter_names
 from transformers.trainer_pt_utils import AcceleratorConfig
 from typing import List, Optional
 from datetime import timedelta
@@ -167,7 +168,10 @@ class LengthGroupedSampler(Sampler):
         return iter(indices)
 
 
+from typing import Dict, Any, Union
+
 class ParsitTrainer(Trainer):
+
 
     def create_accelerator_and_postprocess(self):
         grad_acc_kwargs = {"num_steps": self.args.gradient_accumulation_steps}
@@ -179,7 +183,7 @@ class ParsitTrainer(Trainer):
 
         # create accelerator object
         self.accelerator = Accelerator(
-            dispatch_batches=self.args.dispatch_batches, split_batches=self.args.split_batches, deepspeed_plugin=self.args.deepspeed_plugin, gradient_accumulation_plugin=gradient_accumulation_plugin, kwargs_handlers=[accelerator_kwargs]
+            deepspeed_plugin=self.args.deepspeed_plugin, gradient_accumulation_plugin=gradient_accumulation_plugin, kwargs_handlers=[accelerator_kwargs]
         )
         # some Trainer classes need to use `gather` instead of `gather_for_metrics`, thus we store a flag
         self.gather_function = self.accelerator.gather_for_metrics
@@ -187,6 +191,7 @@ class ParsitTrainer(Trainer):
         # deepspeed and accelerate flags covering both trainer args and accelerate launcher
         self.is_deepspeed_enabled = getattr(self.accelerator.state, "deepspeed_plugin", None) is not None
         self.is_fsdp_enabled = getattr(self.accelerator.state, "fsdp_plugin", None) is not None
+        self.is_tp_enabled = getattr(self.accelerator.state, "tp_plugin", None) is not None
 
         # post accelerator creation setup
         if self.is_fsdp_enabled:
@@ -276,7 +281,10 @@ class ParsitTrainer(Trainer):
         if not isinstance(train_dataset, torch.utils.data.IterableDataset):
             dataloader_params["sampler"] = self._get_train_sampler()
             dataloader_params["drop_last"] = self.args.dataloader_drop_last
-            dataloader_params["worker_init_fn"] = seed_worker
+            # Patch for transformers >=4.53.2: adapt seed_worker signature
+            def worker_init_fn_wrapper(worker_id):
+                return seed_worker(worker_id, self.args.dataloader_num_workers, self.args.local_rank)
+            dataloader_params["worker_init_fn"] = worker_init_fn_wrapper
             dataloader_params["prefetch_factor"] = self.args.dataloader_num_workers * 2 if self.args.dataloader_num_workers != 0 else None
 
         dataloader = self.accelerator.prepare(DataLoader(train_dataset, **dataloader_params))
@@ -383,4 +391,4 @@ class ParsitTrainer(Trainer):
                 model.config.save_pretrained(output_dir)
                 torch.save(weight_to_save, os.path.join(output_dir, f"mm_projector.bin"))
         else:
-            super(ParsitTrainer, self)._save_checkpoint(model, trial, metrics)
+            super(ParsitTrainer, self)._save_checkpoint(model, trial)

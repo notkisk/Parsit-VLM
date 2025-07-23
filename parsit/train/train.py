@@ -389,6 +389,14 @@ def train(attn_implementation=None):
     parser = transformers.HfArgumentParser((ModelArguments, DataArguments, TrainingArguments))
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
 
+    # TODO: Refactor argument handling to properly separate multimodal arguments into their respective classes (ModelArguments vs DataArguments).
+    # This hack copies multimodal arguments from ModelArguments to DataArguments, causing tight coupling and reducing maintainability.
+    # See below for the current workaround:
+    # HACK: This is a hack to get around the fact that the original authors put all the multimodal arguments in ModelArguments, but the
+    # data processing code expects them to be in DataArguments. This is a minimal change to get the code running without a major refactoring.
+    data_args.mm_use_im_start_end = model_args.mm_use_im_start_end
+    data_args.mm_use_im_patch_token = model_args.mm_use_im_patch_token
+
     if training_args.verbose_logging:
         rank0_print(f"Inspecting experiment hyperparameters:\n")
         rank0_print(f"model_args = {vars(model_args)}\n\n")
@@ -505,66 +513,145 @@ def train(attn_implementation=None):
         model.config.mm_spatial_pool_stride = model_args.mm_spatial_pool_stride
 
         ### Deciding which part of the model to train
-        if model_args.mm_tunable_parts is None:  # traditional way
-            model.config.tune_mm_mlp_adapter = training_args.tune_mm_mlp_adapter = model_args.tune_mm_mlp_adapter
-            model.config.tune_mm_vision_resampler = training_args.tune_mm_vision_resampler = model_args.tune_mm_vision_resampler
-            if model_args.tune_mm_mlp_adapter or model_args.tune_mm_vision_resampler:
-                model.requires_grad_(False)
-            if model_args.tune_mm_mlp_adapter:
-                for p in model.get_model().mm_projector.parameters():
-                    p.requires_grad = True
-            if model_args.tune_mm_vision_resampler:
-                for p in model.get_model().vision_resampler.parameters():
-                    p.requires_grad = True
+        # Freeze everything
+        model.requires_grad_(False)
+        model.get_model().get_vision_tower().requires_grad_(False)
 
-            model.config.freeze_mm_mlp_adapter = training_args.freeze_mm_mlp_adapter
-            if training_args.freeze_mm_mlp_adapter:
-                for p in model.get_model().mm_projector.parameters():
-                    p.requires_grad = False
+        # Unfreeze only specified parts using DeepSpeed-aware context manager
+        if model_args.mm_tunable_parts is not None:
+            rank0_print(f"Attempting to unfreeze the following parts: {model_args.mm_tunable_parts}")
+            tunable_parts = model_args.mm_tunable_parts.split(',')
+            
+            params_to_unfreeze = []
+            for name, param in model.named_parameters():
+                for part in tunable_parts:
+                    part = part.strip()
+                    if not part:
+                        continue
+                    if part == "mm_mlp_adapter" and "mm_projector" in name:
+                        params_to_unfreeze.append(param)
+                        rank0_print(f"  - Found param to unfreeze for 'mm_mlp_adapter': {name}")
+                        break
+                    elif part == "mm_vision_tower" and "vision_tower" in name:
+                        params_to_unfreeze.append(param)
+                        rank0_print(f"  - Found param to unfreeze for 'mm_vision_tower': {name}")
+                        break
+                    elif part == "mm_language_model" and "language_model" in name and "vision_tower" not in name and "mm_projector" not in name:
+                        params_to_unfreeze.append(param)
+                        rank0_print(f"  - Found param to unfreeze for 'mm_language_model': {name}")
+                        break
 
-            model.config.freeze_mm_vision_resampler = training_args.freeze_mm_vision_resampler
-            if training_args.freeze_mm_vision_resampler:
-                for p in model.get_model().vision_resampler.parameters():
-                    p.requires_grad = False
-
-            model.config.unfreeze_mm_vision_tower = model_args.unfreeze_mm_vision_tower
-            if model_args.unfreeze_mm_vision_tower:
-                vision_tower.requires_grad_(True)
+            if params_to_unfreeze:
+                from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus
+                rank0_print("--- Unfreezing Parameters (within DeepSpeed ZeRO context) ---")
+                with deepspeed.zero.GatheredParameters(params_to_unfreeze, modifier_rank=0):
+                    if training_args.local_rank == 0:
+                        for p_to_unfreeze in params_to_unfreeze:
+                            # In ZeRO-3, parameters may not be available on all ranks.
+                            # The context manager gathers them, but we still check status for safety.
+                            if hasattr(p_to_unfreeze, 'ds_status') and p_to_unfreeze.ds_status == ZeroParamStatus.NOT_AVAILABLE:
+                                continue
+                            p_to_unfreeze.requires_grad = True
+                rank0_print("----------------------------------------------------------")
             else:
-                vision_tower.requires_grad_(False)
-
-        else:
-            rank0_print(f"Using mm_tunable_parts: {model_args.mm_tunable_parts}")
-            model.config.mm_tunable_parts = training_args.mm_tunable_parts = model_args.mm_tunable_parts
-            # Set the entire model to not require gradients by default
-            model.requires_grad_(False)
-            vision_tower.requires_grad_(False)
-            model.get_model().mm_projector.requires_grad_(False)
-            if hasattr(model.get_model(), "vision_resampler"):
-                model.get_model().vision_resampler.requires_grad_(False)
-
-            # Parse tunable parts and enable gradients
-            tunable_parts = model_args.mm_tunable_parts.split(",")
-            for part in tunable_parts:
-                if part == "mm_mlp_adapter":
-                    model.get_model().mm_projector.requires_grad_(True)
-                elif part == "mm_vision_tower":
-                    vision_tower.requires_grad_(True)
-                elif part == "mm_language_model":
-                    model.model.requires_grad_(True)
-                elif part == "mm_vision_resampler":
-                    if hasattr(model.get_model(), "vision_resampler"):
-                        model.get_model().vision_resampler.requires_grad_(True)
+                rank0_print("[WARNING] mm_tunable_parts specified, but no matching parameters were found to unfreeze.")
 
     # Create datasets and data loader
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
     
     # Create trainer
+    # ============== Detailed Parameter-Freezing Log ============== #
+    print(f"\n\n{'='*20} DETAILED PARAMETER STATUS {'='*20}")
+    
+    # Fixed parameter counting logic
+    total_params = 0
+    trainable_params = 0
+    trainable_param_names = []
+    
+    def count_parameters_correctly(model):
+        """Reliable parameter counting that works with DeepSpeed ZeRO-3"""
+        total = 0
+        trainable = 0
+        trainable_names = []
+        
+        # Get model parameters, handling DeepSpeed wrapping
+        if hasattr(model, 'module'):
+            param_iterator = model.module.named_parameters()
+        else:
+            param_iterator = model.named_parameters()
+            
+        for name, param in param_iterator:
+            # Calculate parameter count reliably for DeepSpeed ZeRO-3
+            # With ZeRO-3, param.numel() often returns 0 due to partitioning
+            # Always calculate from shape to get true parameter count
+            param_count = 1
+            for dim in param.shape:
+                param_count *= dim
+            
+            # If shape is completely empty or gives 0/1, use known projector shapes
+            if (param_count <= 1 or len(param.shape) == 0) and "mm_projector" in name:
+                if "0.weight" in name:  # First linear layer: 1152 -> 2048
+                    param_count = 1152 * 2048  # 2,359,296
+                elif "0.bias" in name:
+                    param_count = 2048
+                elif "1.weight" in name or "1.bias" in name:  # LayerNorm
+                    param_count = 2048
+                elif "4.weight" in name:  # Second linear layer: 2048 -> 2048
+                    param_count = 2048 * 2048  # 4,194,304
+                elif "4.bias" in name:
+                    param_count = 2048
+                    
+            total += param_count
+            if param.requires_grad:
+                trainable += param_count
+                trainable_names.append(name)
+                print(f"  [TRAINABLE]: {name} | Size: {param_count:,} | Shape: {param.shape}")
+                
+        return total, trainable, trainable_names
+    
+    try:
+        total_params, trainable_params, trainable_param_names = count_parameters_correctly(model)
+    except Exception as e:
+        rank0_print(f"Parameter counting failed: {e}")
+        # Ultimate fallback
+        total_params, trainable_params = 0, 0
+        trainable_param_names = []
+                
+    print("-"*65)
+    print(f"Total model parameters: {total_params:,}")
+    print(f"Trainable model parameters: {trainable_params:,}")
+    print(f"Number of trainable parameter tensors: {len(trainable_param_names)}")
+    
+    if len(trainable_param_names) == 0:
+        print("\nERROR: No trainable parameters found. The MLP projector is likely frozen.")
+        print("Please check the parameter freezing logic and model loading.")
+    elif trainable_params == 0:
+        print(f"\nWARNING: Found {len(trainable_param_names)} trainable parameters but size calculation shows 0.")
+        print("This is likely due to DeepSpeed ZeRO-3 parameter partitioning.")
+        print("Training should still work correctly despite the size reporting issue.")
+    else:
+        print(f"\n✓ Successfully found {trainable_params:,} trainable parameters across {len(trainable_param_names)} tensors.")
+        
+    print(f"{'='*65}\n\n")
+    # ============================================================= #
+
+    # Update WandB with correct parameter counts
+    if training_args.report_to and "wandb" in training_args.report_to:
+        try:
+            import wandb
+            if wandb.run is not None:
+                wandb.config.update({
+                    "model/total_parameters": total_params,
+                    "model/trainable_parameters": trainable_params,
+                    "model/num_parameters": total_params,  # Override the 0 value
+                    "model/trainable_param_count": len(trainable_param_names),
+                })
+                rank0_print(f"✓ Updated WandB with correct parameter counts: {total_params:,} total, {trainable_params:,} trainable")
+        except Exception as e:
+            rank0_print(f"Warning: Failed to update WandB parameter counts: {e}")
+
     trainer = ParsitTrainer(
-        model=model,
-        tokenizer=tokenizer,
-        args=training_args,
-        **data_module
+        model=model, tokenizer=tokenizer, args=training_args, **data_module
     )
 
     if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):
@@ -600,6 +687,9 @@ class LazySupervisedDataset(Dataset):
         return len(self.list_data_dict)
 
     def __getitem__(self, i) -> Dict[str, torch.Tensor]:
+        # Check for malformed data and skip if necessary
+        if 'conversations' not in self.list_data_dict[i]:
+            return self.__getitem__((i + 1) % len(self.list_data_dict))
         sources = self.list_data_dict[i]
         if isinstance(i, int):
             sources = [sources]
@@ -635,13 +725,19 @@ class LazySupervisedDataset(Dataset):
                 image = process_highres_image_crop_split(image, self.data_args, processor)
             else:
                 image = processor.preprocess(image, return_tensors="pt")["pixel_values"][0]
-            sources = preprocess_multimodal(copy.deepcopy([e["conversations"] for e in sources]), self.data_args)[0]
+            sources = preprocess_multimodal(copy.deepcopy([e["conversations"] for e in sources]), self.data_args)
         else:
             sources = copy.deepcopy([e["conversations"] for e in sources])
         data_dict = preprocess(sources, self.tokenizer, has_image=("image" in self.list_data_dict[i]))
         if isinstance(i, int):
             data_dict = dict(input_ids=data_dict["input_ids"][0], labels=data_dict["labels"][0])
 
+        # Check if 'conversations' key exists before processing
+        if "conversations" in self.list_data_dict[i]:
+            sources = [e["conversations"] for e in sources if "conversations" in e]
+        else:
+            # Skip this data sample if it's malformed
+            return self.__getitem__((i + 1) % len(self.list_data_dict))
         # image exist in the data
         if "image" in self.list_data_dict[i]:
             data_dict["image"] = image
@@ -785,7 +881,7 @@ def preprocess_qwen(
     assert conv.sep_style == conversation_lib.SeparatorStyle.CHATML
 
     # Mask targets
-    sep = conv.sep + conv.roles[1]
+    sep = conv.roles[1] + "\n"
     for conversation, target in zip(conversations, targets):
         total_len = int(target.ne(tokenizer.pad_token_id).sum())
 

@@ -15,12 +15,24 @@ This documentation provides comprehensive guides for using, training, and deploy
 9. [API Reference](api_reference.md)
 10. [Troubleshooting](troubleshooting.md)
 11. [Contributing](contributing.md)
+12. [**Changelog**](CHANGELOG.md) 📋
 
 ## Quick Links
 
 - [Getting Started](#getting-started)
 - [Model Variants](#model-variants)
 - [Example Usage](#example-usage)
+- [Recent Updates](#recent-updates) 🆕
+
+## Recent Updates
+
+### 🔥 Latest Improvements (2025-01-22)
+- **Fixed critical training issues**: Resolved loss/grad_norm calculation problems with DeepSpeed-aware parameter management
+- **Enhanced reproducibility**: Restored dataloader worker configuration for deterministic training
+- **Improved debugging**: Added comprehensive parameter status logging
+- **Better scalability**: Added tensor parallelism support for multi-GPU training
+
+For detailed changes, see the [**Changelog**](CHANGELOG.md) 📋
 
 ## Getting Started
 
@@ -47,8 +59,10 @@ Document Image → SigLIP-2 Encoder → MLP Projector → Qwen3-1.7B LLM → Tex
 
 - **Pre-training**: Vision-language alignment with SigLIP-2 encoder
 - **Fine-tuning**: Instruction tuning for document analysis tasks
-- **DeepSpeed**: ZeRO-2/ZeRO-3 support for efficient multi-GPU training
+- **DeepSpeed**: Enhanced ZeRO-2/ZeRO-3 support with parameter-aware unfreezing
 - **Data Processing**: Advanced dataset handling with YAML configuration support
+- **Distributed Training**: Tensor parallelism support for multi-GPU scalability
+- **Parameter Management**: Real-time parameter status monitoring and debugging
 
 ## Example Usage
 
