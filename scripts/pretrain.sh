@@ -1,12 +1,16 @@
-export NUM_GPUS=1
+export NUM_GPUS=2
 export OMP_NUM_THREADS=8
-export NCCL_IB_DISABLE=0
-export NCCL_IB_GID_INDEX=3
-export NCCL_SOCKET_IFNAME=eth0
+
+# NCCL settings for better multi-GPU communication
+export NCCL_IB_DISABLE=1
+export NCCL_P2P_DISABLE=0
+export NCCL_DEBUG=WARN
+export NCCL_SOCKET_IFNAME=lo
 
 # Memory management for CUDA OOM prevention
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
-export CUDA_LAUNCH_BLOCKING=1
+# Remove CUDA_LAUNCH_BLOCKING for better performance in multi-GPU
+# export CUDA_LAUNCH_BLOCKING=1
 
 # # Check if running from repo root (should find 'parsit/pyproject.toml')
 # if [ ! -f "parsit/pyproject.toml" ]; then

@@ -351,6 +351,25 @@ class ParsitTrainer(Trainer):
                     },
                 ]
 
+            # Validate parameter groups before creating optimizer
+            total_params = sum(len(group["params"]) for group in optimizer_grouped_parameters)
+            rank0_print(f"Creating optimizer with {total_params} parameters across {len(optimizer_grouped_parameters)} groups")
+            
+            if total_params == 0:
+                rank0_print("ERROR: No trainable parameters found for optimizer! This will cause DeepSpeed to fail.")
+                rank0_print("Checking all model parameters and their requires_grad status:")
+                for name, param in opt_model.named_parameters():
+                    if param.requires_grad:
+                        rank0_print(f"  TRAINABLE: {name} - Shape: {param.shape}")
+                raise ValueError("No trainable parameters found for optimizer. Check parameter unfreezing logic.")
+            
+            # Log parameter group details for debugging
+            for i, group in enumerate(optimizer_grouped_parameters):
+                group_size = len(group["params"])
+                weight_decay = group.get("weight_decay", "default")
+                lr = group.get("lr", "default") 
+                rank0_print(f"  Group {i}: {group_size} params, weight_decay={weight_decay}, lr={lr}")
+
             optimizer_cls, optimizer_kwargs = Trainer.get_optimizer_cls_and_kwargs(self.args)
 
             self.optimizer = optimizer_cls(optimizer_grouped_parameters, **optimizer_kwargs)
