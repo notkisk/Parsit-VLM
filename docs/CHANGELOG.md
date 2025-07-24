@@ -2,11 +2,16 @@
 
 All notable changes to the Parsit project are documented in this file.
 
-## [Unreleased] - 2025-07-23
+## [Unreleased] - 2025-07-24
 
 ### 🔥 Critical Fixes
 
-#### **Latest Critical Fixes (2025-07-23)**
+#### **Latest Critical Fixes (2025-07-24)**
+- **FIXED: Checkpoint system improvements**: Enhanced checkpoint saving and loading reliability for consistent training resumption
+- **FIXED: Training state persistence**: Improved model state management to prevent checkpoint corruption during multi-GPU training
+- **FIXED: DeepSpeed checkpoint compatibility**: Resolved checkpoint format issues that caused training interruptions
+
+#### **Previous Critical Fixes (2025-07-23)**
 - **FIXED: Multi-GPU DeepSpeed initialization**: Resolved "IndexError: list index out of range" in DeepSpeed ZeRO-3 stage3.py when accessing empty optimizer parameter groups
 - **FIXED: Parameter unfreezing timing**: Moved parameter unfreezing logic before ParsitTrainer initialization to ensure parameters are available for optimizer creation
 - **FIXED: Single GPU usage on multi-GPU setup**: Fixed NCCL configuration and distributed training initialization to properly utilize all available GPUs
