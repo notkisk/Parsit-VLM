@@ -517,47 +517,57 @@ def train(attn_implementation=None):
         model.requires_grad_(False)
         model.get_model().get_vision_tower().requires_grad_(False)
 
-        # Unfreeze only specified parts using DeepSpeed-aware context manager
+        # Unfreeze only specified parts BEFORE trainer initialization
+        # This ensures parameters are unfrozen before optimizer creation
         if model_args.mm_tunable_parts is not None:
             rank0_print(f"Attempting to unfreeze the following parts: {model_args.mm_tunable_parts}")
             tunable_parts = model_args.mm_tunable_parts.split(',')
             
-            params_to_unfreeze = []
+            unfrozen_param_count = 0
             for name, param in model.named_parameters():
                 for part in tunable_parts:
                     part = part.strip()
                     if not part:
                         continue
                     if part == "mm_mlp_adapter" and "mm_projector" in name:
-                        params_to_unfreeze.append(param)
-                        rank0_print(f"  - Found param to unfreeze for 'mm_mlp_adapter': {name}")
+                        param.requires_grad = True
+                        unfrozen_param_count += 1
+                        rank0_print(f"  - Unfrozen param for 'mm_mlp_adapter': {name}")
                         break
                     elif part == "mm_vision_tower" and "vision_tower" in name:
-                        params_to_unfreeze.append(param)
-                        rank0_print(f"  - Found param to unfreeze for 'mm_vision_tower': {name}")
+                        param.requires_grad = True
+                        unfrozen_param_count += 1
+                        rank0_print(f"  - Unfrozen param for 'mm_vision_tower': {name}")
                         break
                     elif part == "mm_language_model" and "language_model" in name and "vision_tower" not in name and "mm_projector" not in name:
-                        params_to_unfreeze.append(param)
-                        rank0_print(f"  - Found param to unfreeze for 'mm_language_model': {name}")
+                        param.requires_grad = True
+                        unfrozen_param_count += 1
+                        rank0_print(f"  - Unfrozen param for 'mm_language_model': {name}")
                         break
 
-            if params_to_unfreeze:
-                from deepspeed.runtime.zero.partition_parameters import ZeroParamStatus
-                rank0_print("--- Unfreezing Parameters (within DeepSpeed ZeRO context) ---")
-                with deepspeed.zero.GatheredParameters(params_to_unfreeze, modifier_rank=0):
-                    if training_args.local_rank == 0:
-                        for p_to_unfreeze in params_to_unfreeze:
-                            # In ZeRO-3, parameters may not be available on all ranks.
-                            # The context manager gathers them, but we still check status for safety.
-                            if hasattr(p_to_unfreeze, 'ds_status') and p_to_unfreeze.ds_status == ZeroParamStatus.NOT_AVAILABLE:
-                                continue
-                            p_to_unfreeze.requires_grad = True
-                rank0_print("----------------------------------------------------------")
+            if unfrozen_param_count > 0:
+                rank0_print(f"Successfully unfrozen {unfrozen_param_count} parameters before trainer initialization")
             else:
                 rank0_print("[WARNING] mm_tunable_parts specified, but no matching parameters were found to unfreeze.")
 
     # Create datasets and data loader
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
+    
+    # Validate trainable parameters before creating trainer
+    rank0_print("=== PRE-TRAINER PARAMETER VALIDATION ===")
+    trainable_count = 0
+    for name, param in model.named_parameters():
+        if param.requires_grad:
+            trainable_count += 1
+            rank0_print(f"TRAINABLE: {name}")
+    
+    if trainable_count == 0:
+        rank0_print("CRITICAL ERROR: No trainable parameters found before trainer creation!")
+        rank0_print("This will cause the optimizer to have empty parameter groups and DeepSpeed to fail.")
+        raise ValueError("No trainable parameters found. Check mm_tunable_parts configuration.")
+    else:
+        rank0_print(f"SUCCESS: Found {trainable_count} trainable parameters before trainer creation")
+    rank0_print("===============================================")
     
     # Create trainer
     # ============== Detailed Parameter-Freezing Log ============== #

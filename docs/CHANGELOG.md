@@ -2,11 +2,23 @@
 
 All notable changes to the Parsit project are documented in this file.
 
-## [Unreleased] - 2025-07-22
+## [Unreleased] - 2025-07-24
 
 ### 🔥 Critical Fixes
 
-#### **Latest Critical Fixes (2025-07-22)**
+#### **Latest Critical Fixes (2025-07-24)**
+- **FIXED: Checkpoint system improvements**: Enhanced checkpoint saving and loading reliability for consistent training resumption
+- **FIXED: Training state persistence**: Improved model state management to prevent checkpoint corruption during multi-GPU training
+- **FIXED: DeepSpeed checkpoint compatibility**: Resolved checkpoint format issues that caused training interruptions
+
+#### **Previous Critical Fixes (2025-07-23)**
+- **FIXED: Multi-GPU DeepSpeed initialization**: Resolved "IndexError: list index out of range" in DeepSpeed ZeRO-3 stage3.py when accessing empty optimizer parameter groups
+- **FIXED: Parameter unfreezing timing**: Moved parameter unfreezing logic before ParsitTrainer initialization to ensure parameters are available for optimizer creation
+- **FIXED: Single GPU usage on multi-GPU setup**: Fixed NCCL configuration and distributed training initialization to properly utilize all available GPUs
+- **FIXED: Empty optimizer parameter groups**: Added comprehensive parameter validation in create_optimizer() method to prevent DeepSpeed failures
+- **FIXED: Distributed training communication**: Optimized NCCL settings for local multi-GPU training with P2P communication
+
+#### **Previous Critical Fixes (2025-07-22)**
 - **FIXED: Checkpoint save crash**: Resolved `TypeError: Trainer._save_checkpoint() takes 3 positional arguments but 4 were given` in `parsit_trainer.py:394`
 - **FIXED: Parameter counting bug**: Resolved massive parameter count errors (trillion-scale false counts → accurate 6.56M parameters)
 - **FIXED: DeepSpeed ZeRO-3 parameter visibility**: Implemented proper parameter shape calculation that works with parameter partitioning
@@ -21,7 +33,16 @@ All notable changes to the Parsit project are documented in this file.
 
 ### ✨ Major Features
 
-#### **Recent Major Improvements (2025-07-22)**
+#### **Recent Major Improvements (2025-07-23)**
+
+#### **Multi-GPU Training Infrastructure**
+- **Enhanced distributed training support**: Comprehensive multi-GPU setup with proper parameter synchronization across ranks
+- **DeepSpeed ZeRO-3 optimization**: Improved parameter partitioning and optimizer initialization for large-scale training
+- **NCCL communication optimization**: Fine-tuned settings for local multi-GPU environments with P2P GPU communication
+- **Real-time parameter validation**: Added pre-trainer validation to catch parameter unfreezing issues early
+- **Dataset download automation**: Created `scripts/download_pretrain_data.sh` for automatic git-lfs setup and dataset downloading
+
+#### **Previous Major Improvements (2025-07-22)**
 
 #### **Enhanced Parameter Management & Debugging**
 - **Robust parameter counting**: Added fallback logic for DeepSpeed ZeRO-3 parameter partitioning scenarios
