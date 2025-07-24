@@ -1,13 +1,13 @@
 # Parsit: Vision-Language Model for Document Analysis
 
-Parsit is a specialized vision-language model designed for document analysis tasks. Built on top of the LLaVA-NeXT architecture, Parsit combines **Qwen3-1.7B language models** with **SigLIP vision encoders** to provide state-of-the-art performance on document understanding, OCR, and analysis tasks.
+Parsit is a specialized vision-language model designed for document analysis tasks. It combines **Qwen3-1.7B language models** with **SigLIP vision encoders** to deliver high performance on OCR, question answering, and structured document understanding.
 
 ## Features
 
-- **Document-Focused Architecture**: Optimized specifically for document analysis (no video processing)
+- **Document-Focused Architecture**: Tailored specifically for document analysis (no video or general vision tasks)
 - **Modern Components**: Qwen3-1.7B LLM + SigLIP vision encoder + MLP projector
-- **Flexible Training**: Support for full fine-tuning, LoRA, and various training configurations
-- **Easy Inference**: Simple Python API for document analysis and text extraction
+- **Flexible Training**: Supports full fine-tuning, LoRA, and multiple training modes
+- **Simple Inference**: Python API for document processing and structured text extraction
 - **Comprehensive Evaluation**: Built-in metrics for QA accuracy and OCR performance
 
 ## Quick Start
@@ -87,9 +87,10 @@ Document Image → SigLIP-2 Encoder → MLP Projector → Qwen3-1.7B LLM → Tex
 ```
 
 ### Components
+
 - **Vision Encoder**: SigLIP-2 (google/siglip-so400m-patch14-384)  
-- **Language Model**: Qwen3-1.7B-Instruct
-- **Projector**: 2-layer MLP with GELU activation (mlp2x_gelu)
+- **Language Model**: Qwen3-1.7B-Instruct  
+- **Projector**: 2-layer MLP with GELU activation (`mlp2x_gelu`)  
 - **DeepSpeed**: ZeRO-2 and ZeRO-3 configurations for efficient training
 
 ## Evaluation
@@ -118,6 +119,7 @@ ocr_metrics = evaluator.evaluate_ocr_dataset(
 ## Examples
 
 ### Invoice Analysis
+
 ```python
 model = ParsitInference("parsit-qwen-7b")
 
@@ -129,11 +131,12 @@ response = model.chat(
 ```
 
 ### Form Understanding
+
 ```python
 # Analyze form structure
 response = model.chat(
     "Describe the structure of this form and list all the fields",
-    "application_form.jpg"  
+    "application_form.jpg"
 )
 ```
 
@@ -151,10 +154,9 @@ Key parameters for document analysis training:
 
 ## License
 
-This project builds upon LLaVA-NeXT and follows the same licensing terms.
+This project is released under a permissive open-source license.
 
 ## Acknowledgments
 
-- Built on [LLaVA-NeXT](https://github.com/LLaVA-VL/LLaVA-NeXT) architecture
 - Uses [Qwen3-1.7B](https://huggingface.co/Qwen/Qwen3-1.7B-Instruct) language model  
 - Powered by [SigLIP-2](https://github.com/google-research/big_vision) vision encoder
