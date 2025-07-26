@@ -26,11 +26,11 @@ This documentation provides comprehensive guides for using, training, and deploy
 
 ## Recent Updates
 
-### 🔥 Latest Improvements (2025-01-22)
-- **Fixed critical training issues**: Resolved loss/grad_norm calculation problems with DeepSpeed-aware parameter management
-- **Enhanced reproducibility**: Restored dataloader worker configuration for deterministic training
-- **Improved debugging**: Added comprehensive parameter status logging
-- **Better scalability**: Added tensor parallelism support for multi-GPU training
+### 🔥 Latest Improvements (2025-07-26)
+- **Added Qwen3-4B support**: Extended model support to include 4B parameter variant with optimized training configurations
+- **Auto GPU detection**: Enhanced training scripts with automatic GPU count detection and single-GPU fallback
+- **Memory optimization**: Implemented CPU offloading and optimized DeepSpeed configurations for larger models
+- **Training script improvements**: Added model-specific scripts with optimized hyperparameters for different model sizes
 
 For detailed changes, see the [**Changelog**](CHANGELOG.md) 📋
 
@@ -48,11 +48,12 @@ Parsit is designed for document analysis tasks including:
 | Model | Parameters | Vision Encoder | Recommended Use |
 |-------|------------|----------------|-----------------|
 | parsit-qwen3-1.7b | 1.7B | SigLIP-2-400M | Fast inference, lightweight deployment |
+| parsit-qwen3-4b | 4B | SigLIP-2-400M | Enhanced performance, better accuracy |
 
 ### Architecture
 
 ```
-Document Image → SigLIP-2 Encoder → MLP Projector → Qwen3-1.7B LLM → Text Response
+Document Image → SigLIP-2 Encoder → MLP Projector → Qwen3 LLM (1.7B/4B) → Text Response
 ```
 
 ### Training Infrastructure
