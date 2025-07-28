@@ -1,0 +1,39 @@
+# Core dependencies
+torch>=2.1.0
+torchvision>=0.16.0
+transformers>=4.47.0
+accelerate>=1.0.0
+datasets>=2.14.0
+
+# Training optimization
+deepspeed>=0.15.0
+peft>=0.13.0
+bitsandbytes>=0.44.0
+
+# Image and video processing
+Pillow>=10.0.0
+opencv-python>=4.8.0
+qwen-vl-utils[decord]>=0.0.8
+
+# Utilities
+wandb>=0.17.0
+tensorboard>=2.14.0
+tqdm>=4.65.0
+numpy>=1.24.0
+scipy>=1.11.0
+scikit-learn>=1.3.0
+
+# Data processing
+PyYAML>=6.0
+jsonlines>=3.1.0
+pandas>=2.0.0
+
+# Development and testing
+pytest>=7.4.0
+black>=23.0.0
+isort>=5.12.0
+flake8>=6.0.0
+
+# Optional dependencies for specific features
+# flash-attn>=2.6.0  # Uncomment for flash attention support
+# apex  # Uncomment for NVIDIA Apex optimizations

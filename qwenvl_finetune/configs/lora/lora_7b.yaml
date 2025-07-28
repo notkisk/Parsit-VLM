@@ -1,0 +1,145 @@
+# LoRA Configuration for Qwen2.5-VL 7B Model
+
+# Model Configuration
+model:
+  model_size: "7B"
+  model_name: "Qwen/Qwen2.5-VL-7B-Instruct"
+  torch_dtype: "bfloat16"
+  attn_implementation: "flash_attention_2"
+  trust_remote_code: true
+  
+  # Quantization for memory efficiency
+  load_in_4bit: true  # Enable 4-bit quantization for 7B model
+  load_in_8bit: false
+
+# LoRA Configuration
+lora:
+  # Basic LoRA parameters (slightly higher for larger model)
+  r: 32
+  lora_alpha: 64
+  lora_dropout: 0.1
+  bias: "none"
+  task_type: "CAUSAL_LM"
+  
+  # Target modules for LoRA adaptation (more comprehensive for 7B)
+  target_modules:
+    - "q_proj"
+    - "k_proj"
+    - "v_proj"
+    - "o_proj"
+    - "gate_proj"
+    - "up_proj"
+    - "down_proj"
+    - "embed_tokens"
+    - "lm_head"
+  
+  # LoRA specific settings
+  inference_mode: false
+  use_rslora: false
+  use_dora: false
+
+# Training Configuration
+training:
+  # Basic training parameters
+  output_dir: "./checkpoints/qwen25vl_7b_lora"
+  num_train_epochs: 5
+  per_device_train_batch_size: 2
+  per_device_eval_batch_size: 4
+  gradient_accumulation_steps: 8
+  eval_accumulation_steps: 1
+  
+  # Learning rate and optimization (higher for LoRA)
+  learning_rate: 2.5e-4
+  weight_decay: 0.01
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  adam_epsilon: 1.0e-8
+  max_grad_norm: 1.0
+  
+  # Learning rate scheduler
+  lr_scheduler_type: "cosine"
+  warmup_ratio: 0.05
+  warmup_steps: 0
+  
+  # Mixed precision
+  bf16: true
+  fp16: false
+  tf32: true
+  
+  # Memory optimization
+  gradient_checkpointing: true
+  dataloader_pin_memory: true
+  dataloader_num_workers: 2
+  
+  # Evaluation and saving
+  evaluation_strategy: "steps"
+  eval_steps: 250
+  save_strategy: "steps"
+  save_steps: 250
+  save_total_limit: 3
+  load_best_model_at_end: true
+  metric_for_best_model: "eval_loss"
+  greater_is_better: false
+  
+  # Logging
+  logging_dir: "./logs/qwen25vl_7b_lora"
+  logging_strategy: "steps"
+  logging_steps: 25
+  report_to: ["tensorboard", "wandb"]
+  
+  # Other settings
+  seed: 42
+  remove_unused_columns: false
+  label_names: ["labels"]
+
+# DeepSpeed Configuration
+deepspeed:
+  enabled: true
+  config_file: "./configs/deepspeed/zero3_7b.json"
+  
+# Data Configuration
+data:
+  max_length: 2048
+  max_image_tokens: 4096
+  image_aspect_ratio: "anyres"
+  conversation_template: "chatml"
+  system_message: "You are a helpful AI assistant."
+  
+  # Data validation
+  validate_images: true
+  validate_conversations: true
+  skip_invalid_samples: true
+  
+  # Data augmentation
+  enable_image_augmentation: true
+  augmentation_prob: 0.3
+
+# Hardware Configuration
+hardware:
+  # Memory settings
+  max_memory_gb: null
+  use_cpu_offload: true  # Enable for 7B model
+  
+  # Multi-GPU settings
+  dataloader_drop_last: true
+  ddp_find_unused_parameters: false
+
+# Logging and Monitoring
+monitoring:
+  log_memory_usage: true
+  memory_logging_interval: 50
+  
+  # WandB settings
+  wandb_project: "qwen25vl-lora"
+  wandb_name: "qwen25vl-7b-lora"
+  wandb_tags: ["qwen25vl", "7B", "lora", "parameter-efficient", "multimodal", "quantized"]
+
+# Checkpoint Management
+checkpointing:
+  save_safetensors: true
+  checkpoint_keep_steps: 5
+  resume_from_checkpoint: null
+  
+  # LoRA specific
+  save_adapter_only: true
+  merge_adapter_at_end: false

@@ -1,0 +1,111 @@
+# Qwen2.5-VL 3B Model Fine-tuning Configuration
+
+# Model Configuration
+model:
+  model_size: "3B"
+  model_name: "Qwen/Qwen2.5-VL-3B-Instruct"
+  torch_dtype: "bfloat16"
+  attn_implementation: "eager"
+  trust_remote_code: true
+
+# Training Configuration
+training:
+  # Basic training parameters
+  output_dir: "./checkpoints/qwen25vl_3b_finetune"
+  num_train_epochs: 3
+  per_device_train_batch_size: 1
+  per_device_eval_batch_size: 4
+  gradient_accumulation_steps: 8
+  eval_accumulation_steps: 1
+  
+  # Learning rate and optimization
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  adam_epsilon: 1.0e-8
+  max_grad_norm: 1.0
+  
+  # Learning rate scheduler
+  lr_scheduler_type: "cosine"
+  warmup_ratio: 0.03
+  warmup_steps: 0
+  
+  # Mixed precision
+  bf16: true
+  fp16: false
+  tf32: true
+  
+  # Memory optimization
+  gradient_checkpointing: true
+  dataloader_pin_memory: true
+  dataloader_num_workers: 0
+  
+  # Evaluation and saving
+  eval_strategy: "no"
+  eval_steps: 500
+  save_strategy: "steps"
+  save_steps: 500
+  save_total_limit: 3
+  load_best_model_at_end: false
+  metric_for_best_model: "eval_loss"
+  greater_is_better: false
+  
+  # Logging
+  logging_dir: "./logs/qwen25vl_3b_finetune"
+  logging_strategy: "steps"
+  logging_steps: 50
+  report_to: ["tensorboard"]
+  
+  # Other settings
+  seed: 42
+  remove_unused_columns: true
+  label_names: ["labels"]
+
+# DeepSpeed Configuration (disabled for single GPU)
+deepspeed:
+  enabled: false
+  config_file: "./configs/deepspeed/zero2_3b.json"
+  
+# Data Configuration
+data:
+  max_length: 2048
+  max_image_tokens: 4096
+  image_aspect_ratio: "anyres"
+  conversation_template: "chatml"
+  system_message: "You are a helpful AI assistant."
+  
+  # Data validation
+  validate_images: true
+  validate_conversations: true
+  skip_invalid_samples: true
+  
+  # Data augmentation
+  enable_image_augmentation: false
+  augmentation_prob: 0.2
+
+# Hardware Configuration
+hardware:
+  # Memory settings
+  max_memory_gb: null  # Auto-detect
+  use_cpu_offload: false
+  
+  # Multi-GPU settings
+  dataloader_drop_last: true
+  ddp_find_unused_parameters: false
+
+# Logging and Monitoring
+monitoring:
+  log_memory_usage: true
+  memory_logging_interval: 100
+  
+  # WandB settings
+  wandb_project: "qwen25vl-finetune"
+  wandb_name: "qwen25vl-3b-finetune"
+  wandb_tags: ["qwen25vl", "3B", "finetune", "multimodal"]
+
+# Checkpoint Management
+checkpointing:
+  save_safetensors: true
+  checkpoint_keep_steps: 5
+  resume_from_checkpoint: null

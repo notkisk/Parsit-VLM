@@ -1,0 +1,10 @@
+[2025-07-28 20:55:22] [    INFO] [root:73] Logging to file: ./logs/qwen25vl_3b_lora/training_20250728_205522.log
+[2025-07-28 20:55:22] [    INFO] [__main__:49] Starting Qwen2.5-VL fine-tuning
+[2025-07-28 20:55:22] [    INFO] [__main__:52] Loading 3B model...
+[2025-07-28 20:55:22] [    INFO] [qwen25vl.models.model_utils:191] Loading 3B model: Qwen/Qwen2.5-VL-3B-Instruct
+[2025-07-28 20:55:22] [    INFO] [qwen25vl.models.model_utils:200] Using 4-bit quantization
+[2025-07-28 20:55:22] [    INFO] [qwen25vl.models.qwen25vl_model:65] Loading Qwen2.5-VL model: Qwen/Qwen2.5-VL-3B-Instruct
+[2025-07-28 20:55:23] [    INFO] [accelerate.utils.modeling:1004] We will use 90% of the memory on device 0 for storing the model, and 10% for the buffer to avoid OOM. You can set `max_memory` in to a higher value to use more memory (at your own risk).
+[2025-07-28 20:55:34] [    INFO] [qwen25vl.models.qwen25vl_model:89] Model loaded successfully. Parameters: {'total': 2034024448, 'trainable': 312902912, 'non_trainable': 1721121536, 'trainable_percentage': 15.383439088338823}
+[2025-07-28 20:55:34] [    INFO] [qwen25vl.models.model_utils:221] Using custom LoRA configuration
+[2025-07-28 20:55:34] [    INFO] [qwen25vl.models.model_utils:148] Applying LoRA configuration to model

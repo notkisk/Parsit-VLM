@@ -1,0 +1,61 @@
+[2025-07-28 20:50:19] [    INFO] [root:73] Logging to file: ./logs/qwen25vl_3b_lora/training_20250728_205019.log
+[2025-07-28 20:50:19] [    INFO] [__main__:49] Starting Qwen2.5-VL fine-tuning
+[2025-07-28 20:50:19] [    INFO] [__main__:52] Loading 3B model...
+[2025-07-28 20:50:19] [    INFO] [qwen25vl.models.model_utils:188] Loading 3B model: Qwen/Qwen2.5-VL-3B-Instruct
+[2025-07-28 20:50:19] [    INFO] [qwen25vl.models.qwen25vl_model:65] Loading Qwen2.5-VL model: Qwen/Qwen2.5-VL-3B-Instruct
+[2025-07-28 20:50:20] [    INFO] [accelerate.utils.modeling:1004] We will use 90% of the memory on device 0 for storing the model, and 10% for the buffer to avoid OOM. You can set `max_memory` in to a higher value to use more memory (at your own risk).
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.models.qwen25vl_model:89] Model loaded successfully. Parameters: {'total': 3754622976, 'trainable': 3754622976, 'non_trainable': 0, 'trainable_percentage': 100.0}
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.models.model_utils:223] Model loaded successfully:
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.models.model_utils:224]   Total parameters: 3,754,622,976
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.models.model_utils:225]   Trainable parameters: 3,754,622,976 (100.00%)
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.models.model_utils:226]   Memory footprint: 7161.4 MB
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.data_processor:352] DataProcessor initialized
+[2025-07-28 20:50:26] [    INFO] [__main__:79] Loading training data...
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.conversation:53] ConversationHandler initialized with template: chatml
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.data_processor:72] Loaded 10 samples for train split
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.data_processor:451] Analyzing dataset...
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.data_processor:493] Dataset analysis complete:
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.data_processor:494]   Total samples: 10
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.data_processor:495]   Average conversation length: 6.8
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.data_processor:496]   Multimodal samples: 10 (100.0%)
+[2025-07-28 20:50:26] [    INFO] [__main__:84] Dataset loaded: 10 samples
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.models.qwen25vl_model:240] Gradient checkpointing enabled
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:120] Gradient checkpointing enabled
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.utils.memory_utils:71] Memory caches cleared
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:237] ============================================================
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:238] MODEL PARAMETER SUMMARY
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:239] ============================================================
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:240] Total parameters: 3,754,622,976
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:241] Trainable parameters: 3,754,622,976 (100.00%)
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:242] Frozen parameters: 0 (0.00%)
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:243] 
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:244] Parameters by layer:
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:248]   model: 3,754,622,976 total, 3,754,622,976 trainable (100.0%)
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:250] ============================================================
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:109] Qwen25VLTrainer initialized successfully
+[2025-07-28 20:50:26] [    INFO] [__main__:102] Starting training...
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:274] Starting Qwen2.5-VL training...
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:256] ============================================================
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:257] TRAINING CONFIGURATION
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:258] ============================================================
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:266] gradient_accumulation_steps: 4
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:266] gradient_checkpointing: True
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:266] learning_rate: 0.0003
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:266] lr_scheduler_type: SchedulerType.COSINE
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:266] model_size: 3B
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:266] num_train_epochs: 5
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:266] per_device_train_batch_size: 4
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:266] use_deepspeed: True
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:266] use_lora: False
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:266] warmup_ratio: 0.05
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:266] weight_decay: 0.01
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.training.trainer:268] ============================================================
+[2025-07-28 20:50:26] [    INFO] [qwen25vl_trainer:203] Initial: GPU 0 (NVIDIA RTX A4500): Allocated: 6.99GB | Reserved: 7.01GB | Max Allocated: 6.99GB | Total: 19.70GB | Utilization: 35.5%
+[2025-07-28 20:50:26] [ WARNING] [accelerate.accelerator:1972] Gradient accumulation steps mismatch: GradientAccumulationPlugin has 1, DeepSpeed config has 4. Using DeepSpeed's value.
+[2025-07-28 20:50:26] [    INFO] [qwen25vl.models.qwen25vl_model:251] Gradient checkpointing enabled
+[2025-07-28 20:50:26] [   ERROR] [qwen25vl.training.trainer:313] Training failed with error: cannot load MPI library
+/root/.local/lib: cannot open shared object file: No such file or directory
+libmpi.so: cannot open shared object file: No such file or directory
+libmpi.so.12: cannot open shared object file: No such file or directory
+libmpi.so.40: cannot open shared object file: No such file or directory
+[2025-07-28 20:50:27] [    INFO] [qwen25vl.utils.memory_utils:71] Memory caches cleared

@@ -1,0 +1,344 @@
+[
+  {
+    "conversations": [
+      {
+        "from": "human",
+        "value": "<image>\nWhat is the count value in the table?"
+      },
+      {
+        "from": "gpt",
+        "value": "42"
+      },
+      {
+        "from": "human",
+        "value": "<image>\nWhat can you tell me about the content of this document?"
+      },
+      {
+        "from": "gpt",
+        "value": "This is a synthetic document created for testing vision-language models. It contains structured information including titles, bullet points, and tabular data for comprehensive analysis."
+      },
+      {
+        "from": "human",
+        "value": "<image>\nDescribe the structure of this document."
+      },
+      {
+        "from": "gpt",
+        "value": "This document contains a title, multiple paragraphs of text, key information in bullet points, and a simple table with category-value pairs."
+      },
+      {
+        "from": "human",
+        "value": "<image>\nWhat is the status shown in the table?"
+      },
+      {
+        "from": "gpt",
+        "value": "Active"
+      }
+    ],
+    "image": "synthetic_doc_000.jpg",
+    "source": "synthetic_test",
+    "sample_id": 0
+  },
+  {
+    "conversations": [
+      {
+        "from": "human",
+        "value": "<image>\nDescribe the structure of this document."
+      },
+      {
+        "from": "gpt",
+        "value": "This document contains a title, multiple paragraphs of text, key information in bullet points, and a simple table with category-value pairs."
+      },
+      {
+        "from": "human",
+        "value": "<image>\nHow many items are listed in the additional details section?"
+      },
+      {
+        "from": "gpt",
+        "value": "3"
+      },
+      {
+        "from": "human",
+        "value": "<image>\nWhat can you tell me about the content of this document?"
+      },
+      {
+        "from": "gpt",
+        "value": "This is a synthetic document created for testing vision-language models. It contains structured information including titles, bullet points, and tabular data for comprehensive analysis."
+      }
+    ],
+    "image": "synthetic_doc_001.jpg",
+    "source": "synthetic_test",
+    "sample_id": 1
+  },
+  {
+    "conversations": [
+      {
+        "from": "human",
+        "value": "<image>\nHow many items are listed in the additional details section?"
+      },
+      {
+        "from": "gpt",
+        "value": "3"
+      },
+      {
+        "from": "human",
+        "value": "<image>\nWhat can you tell me about the content of this document?"
+      },
+      {
+        "from": "gpt",
+        "value": "This is a synthetic document created for testing vision-language models. It contains structured information including titles, bullet points, and tabular data for comprehensive analysis."
+      },
+      {
+        "from": "human",
+        "value": "<image>\nWhat is the purpose of this document?"
+      },
+      {
+        "from": "gpt",
+        "value": "Fine-tuning validation"
+      },
+      {
+        "from": "human",
+        "value": "<image>\nWhat is the count value in the table?"
+      },
+      {
+        "from": "gpt",
+        "value": "42"
+      }
+    ],
+    "image": "synthetic_doc_002.jpg",
+    "source": "synthetic_test",
+    "sample_id": 2
+  },
+  {
+    "conversations": [
+      {
+        "from": "human",
+        "value": "<image>\nWhat can you tell me about the content of this document?"
+      },
+      {
+        "from": "gpt",
+        "value": "This is a synthetic document created for testing vision-language models. It contains structured information including titles, bullet points, and tabular data for comprehensive analysis."
+      },
+      {
+        "from": "human",
+        "value": "<image>\nDescribe the structure of this document."
+      },
+      {
+        "from": "gpt",
+        "value": "This document contains a title, multiple paragraphs of text, key information in bullet points, and a simple table with category-value pairs."
+      },
+      {
+        "from": "human",
+        "value": "<image>\nWhat is the main title of this document?"
+      },
+      {
+        "from": "gpt",
+        "value": "Document Analysis Test"
+      },
+      {
+        "from": "human",
+        "value": "<image>\nWhat type of document is this?"
+      },
+      {
+        "from": "gpt",
+        "value": "Test Document"
+      }
+    ],
+    "image": "synthetic_doc_003.jpg",
+    "source": "synthetic_test",
+    "sample_id": 3
+  },
+  {
+    "conversations": [
+      {
+        "from": "human",
+        "value": "<image>\nWhat is the count value in the table?"
+      },
+      {
+        "from": "gpt",
+        "value": "42"
+      },
+      {
+        "from": "human",
+        "value": "<image>\nWhat is the purpose of this document?"
+      },
+      {
+        "from": "gpt",
+        "value": "Fine-tuning validation"
+      }
+    ],
+    "image": "synthetic_doc_004.jpg",
+    "source": "synthetic_test",
+    "sample_id": 4
+  },
+  {
+    "conversations": [
+      {
+        "from": "human",
+        "value": "<image>\nWhat is the main title of this document?"
+      },
+      {
+        "from": "gpt",
+        "value": "Document Analysis Test"
+      },
+      {
+        "from": "human",
+        "value": "<image>\nWhat is the status shown in the table?"
+      },
+      {
+        "from": "gpt",
+        "value": "Active"
+      },
+      {
+        "from": "human",
+        "value": "<image>\nWhat type of document is this?"
+      },
+      {
+        "from": "gpt",
+        "value": "Test Document"
+      }
+    ],
+    "image": "synthetic_doc_005.jpg",
+    "source": "synthetic_test",
+    "sample_id": 5
+  },
+  {
+    "conversations": [
+      {
+        "from": "human",
+        "value": "<image>\nWhat can you tell me about the content of this document?"
+      },
+      {
+        "from": "gpt",
+        "value": "This is a synthetic document created for testing vision-language models. It contains structured information including titles, bullet points, and tabular data for comprehensive analysis."
+      },
+      {
+        "from": "human",
+        "value": "<image>\nWhat type of document is this?"
+      },
+      {
+        "from": "gpt",
+        "value": "Test Document"
+      },
+      {
+        "from": "human",
+        "value": "<image>\nHow many items are listed in the additional details section?"
+      },
+      {
+        "from": "gpt",
+        "value": "3"
+      },
+      {
+        "from": "human",
+        "value": "<image>\nWhat is the main title of this document?"
+      },
+      {
+        "from": "gpt",
+        "value": "Document Analysis Test"
+      }
+    ],
+    "image": "synthetic_doc_006.jpg",
+    "source": "synthetic_test",
+    "sample_id": 6
+  },
+  {
+    "conversations": [
+      {
+        "from": "human",
+        "value": "<image>\nHow many items are listed in the additional details section?"
+      },
+      {
+        "from": "gpt",
+        "value": "3"
+      },
+      {
+        "from": "human",
+        "value": "<image>\nWhat can you tell me about the content of this document?"
+      },
+      {
+        "from": "gpt",
+        "value": "This is a synthetic document created for testing vision-language models. It contains structured information including titles, bullet points, and tabular data for comprehensive analysis."
+      }
+    ],
+    "image": "synthetic_doc_007.jpg",
+    "source": "synthetic_test",
+    "sample_id": 7
+  },
+  {
+    "conversations": [
+      {
+        "from": "human",
+        "value": "<image>\nWhat type of document is this?"
+      },
+      {
+        "from": "gpt",
+        "value": "Test Document"
+      },
+      {
+        "from": "human",
+        "value": "<image>\nWhat is the count value in the table?"
+      },
+      {
+        "from": "gpt",
+        "value": "42"
+      },
+      {
+        "from": "human",
+        "value": "<image>\nDescribe the structure of this document."
+      },
+      {
+        "from": "gpt",
+        "value": "This document contains a title, multiple paragraphs of text, key information in bullet points, and a simple table with category-value pairs."
+      },
+      {
+        "from": "human",
+        "value": "<image>\nWhat is the purpose of this document?"
+      },
+      {
+        "from": "gpt",
+        "value": "Fine-tuning validation"
+      }
+    ],
+    "image": "synthetic_doc_008.jpg",
+    "source": "synthetic_test",
+    "sample_id": 8
+  },
+  {
+    "conversations": [
+      {
+        "from": "human",
+        "value": "<image>\nWhat can you tell me about the content of this document?"
+      },
+      {
+        "from": "gpt",
+        "value": "This is a synthetic document created for testing vision-language models. It contains structured information including titles, bullet points, and tabular data for comprehensive analysis."
+      },
+      {
+        "from": "human",
+        "value": "<image>\nWhat is the count value in the table?"
+      },
+      {
+        "from": "gpt",
+        "value": "42"
+      },
+      {
+        "from": "human",
+        "value": "<image>\nDescribe the structure of this document."
+      },
+      {
+        "from": "gpt",
+        "value": "This document contains a title, multiple paragraphs of text, key information in bullet points, and a simple table with category-value pairs."
+      },
+      {
+        "from": "human",
+        "value": "<image>\nHow many items are listed in the additional details section?"
+      },
+      {
+        "from": "gpt",
+        "value": "3"
+      }
+    ],
+    "image": "synthetic_doc_009.jpg",
+    "source": "synthetic_test",
+    "sample_id": 9
+  }
+]
