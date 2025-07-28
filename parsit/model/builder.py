@@ -93,22 +93,80 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
             model.load_state_dict(mm_projector_weights, strict=False)
             
         else:
-            # Direct model loading
+            # Direct model loading with dynamic model type detection
             rank0_print(f"Loading Parsit model: {model_path}")
-            from parsit.model.language_model.parsit_qwen import ParsitQwenConfig
             
-            tokenizer = AutoTokenizer.from_pretrained(model_path)
-            if customized_config is None:
-                parsit_cfg = ParsitQwenConfig.from_pretrained(model_path)
+            # Detect model type from config or path
+            config = AutoConfig.from_pretrained(model_path)
+            model_type = getattr(config, 'model_type', '').lower()
+            
+            # Determine appropriate model class based on model type or path
+            if 'qwen2_vl' in model_type or 'qwen2.5-vl' in model_path.lower():
+                from parsit.model.language_model.parsit_qwen2_vl import ParsitQwen2VLConfig, ParsitQwen2VLForConditionalGeneration
+                
+                tokenizer = AutoTokenizer.from_pretrained(model_path)
+                if customized_config is None:
+                    parsit_cfg = ParsitQwen2VLConfig.from_pretrained(model_path)
+                else:
+                    parsit_cfg = customized_config
+
+                if overwrite_config is not None:
+                    rank0_print(f"Overwriting config with {overwrite_config}")
+                    for k, v in overwrite_config.items():
+                        setattr(parsit_cfg, k, v)
+
+                model = ParsitQwen2VLForConditionalGeneration.from_pretrained(
+                    model_path, 
+                    low_cpu_mem_usage=True, 
+                    attn_implementation=attn_implementation, 
+                    config=parsit_cfg, 
+                    **kwargs
+                )
+                
+            elif 'exaone' in model_type or 'exaone' in model_path.lower():
+                from parsit.model.language_model.parsit_exaone import ParsitExaoneConfig, ParsitExaoneForCausalLM
+                
+                tokenizer = AutoTokenizer.from_pretrained(model_path)
+                if customized_config is None:
+                    parsit_cfg = ParsitExaoneConfig.from_pretrained(model_path)
+                else:
+                    parsit_cfg = customized_config
+
+                if overwrite_config is not None:
+                    rank0_print(f"Overwriting config with {overwrite_config}")
+                    for k, v in overwrite_config.items():
+                        setattr(parsit_cfg, k, v)
+
+                model = ParsitExaoneForCausalLM.from_pretrained(
+                    model_path, 
+                    low_cpu_mem_usage=True, 
+                    attn_implementation=attn_implementation, 
+                    config=parsit_cfg, 
+                    **kwargs
+                )
+                
             else:
-                parsit_cfg = customized_config
+                # Default to Qwen for backward compatibility
+                from parsit.model.language_model.parsit_qwen import ParsitQwenConfig, ParsitQwenForCausalLM
+                
+                tokenizer = AutoTokenizer.from_pretrained(model_path)
+                if customized_config is None:
+                    parsit_cfg = ParsitQwenConfig.from_pretrained(model_path)
+                else:
+                    parsit_cfg = customized_config
 
-            if overwrite_config is not None:
-                rank0_print(f"Overwriting config with {overwrite_config}")
-                for k, v in overwrite_config.items():
-                    setattr(parsit_cfg, k, v)
+                if overwrite_config is not None:
+                    rank0_print(f"Overwriting config with {overwrite_config}")
+                    for k, v in overwrite_config.items():
+                        setattr(parsit_cfg, k, v)
 
-            model = ParsitQwenForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, attn_implementation=attn_implementation, config=parsit_cfg, **kwargs)
+                model = ParsitQwenForCausalLM.from_pretrained(
+                    model_path, 
+                    low_cpu_mem_usage=True, 
+                    attn_implementation=attn_implementation, 
+                    config=parsit_cfg, 
+                    **kwargs
+                )
     else:
         # Standard language model loading
         tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)

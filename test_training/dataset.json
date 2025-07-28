@@ -1,0 +1,15 @@
+[
+  {
+    "image": "test.jpg",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "<image>\nWhat do you see?"
+      },
+      {
+        "from": "gpt",
+        "value": "I see a red image with the text TEST."
+      }
+    ]
+  }
+]

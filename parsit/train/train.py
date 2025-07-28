@@ -265,14 +265,50 @@ def smart_tokenizer_and_embedding_resize(
 
 
 def get_model(model_args, training_args, bnb_model_from_pretrained_args):
-    """Get model - surgically ported to only support Qwen models"""
+    """Get model with dynamic model class selection supporting multiple architectures"""
+    
+    # Determine model type from model name or explicit class name
+    model_name_lower = model_args.model_name_or_path.lower()
+    
+    # Override model class detection if explicitly provided
     if model_args.model_class_name is not None:
         model_class_name = model_args.model_class_name
+        if "qwen2vl" in model_class_name.lower() or "qwen2_vl" in model_class_name.lower():
+            model_type = "qwen2_vl"
+        elif "exaone" in model_class_name.lower():
+            model_type = "exaone"
+        else:
+            model_type = "qwen"
     else:
-        model_class_name = "ParsitQwenForCausalLM"
-
-    from parsit.model.language_model.parsit_qwen import ParsitQwenForCausalLM, ParsitQwenConfig
-
+        # Auto-detect model type from path
+        if "qwen2.5-vl" in model_name_lower or "qwen2_vl" in model_name_lower:
+            model_type = "qwen2_vl"
+            model_class_name = "ParsitQwen2VLForConditionalGeneration"
+        elif "exaone" in model_name_lower:
+            model_type = "exaone"
+            model_class_name = "ParsitExaoneForCausalLM"
+        else:
+            model_type = "qwen"
+            model_class_name = "ParsitQwenForCausalLM"
+    
+    # Import appropriate model classes based on detected type
+    if model_type == "qwen2_vl":
+        from parsit.model.language_model.parsit_qwen2_vl import ParsitQwen2VLForConditionalGeneration, ParsitQwen2VLConfig
+        ModelClass = ParsitQwen2VLForConditionalGeneration
+        ConfigClass = ParsitQwen2VLConfig
+        rank0_print(f"Loading Qwen2.5-VL model from: {model_args.model_name_or_path}")
+    elif model_type == "exaone":
+        from parsit.model.language_model.parsit_exaone import ParsitExaoneForCausalLM, ParsitExaoneConfig
+        ModelClass = ParsitExaoneForCausalLM
+        ConfigClass = ParsitExaoneConfig
+        rank0_print(f"Loading EXAONE model from: {model_args.model_name_or_path}")
+    else:
+        from parsit.model.language_model.parsit_qwen import ParsitQwenForCausalLM, ParsitQwenConfig
+        ModelClass = ParsitQwenForCausalLM
+        ConfigClass = ParsitQwenConfig
+        rank0_print(f"Loading Qwen model from: {model_args.model_name_or_path}")
+    
+    # Load tokenizer
     tokenizer = transformers.AutoTokenizer.from_pretrained(
         model_args.model_name_or_path,
         cache_dir=training_args.cache_dir,
@@ -280,19 +316,29 @@ def get_model(model_args, training_args, bnb_model_from_pretrained_args):
         padding_side="right",
         use_fast=False,
     )
-    rank0_print(f"Loading Qwen model from: {model_args.model_name_or_path}")
-
-    if model_args.vision_tower is not None:
-        config = ParsitQwenConfig.from_pretrained(model_args.model_name_or_path)
-        config.mm_vision_tower = model_args.vision_tower
-        config.mm_projector_type = getattr(model_args, "mm_projector_type", "mlp2x_gelu")
-        config.mm_hidden_size = getattr(config, "mm_hidden_size", 1152)  # SigLIP hidden size
-        config.mm_vision_select_layer = model_args.mm_vision_select_layer
-        config.mm_vision_select_feature = model_args.mm_vision_select_feature
-        config.mm_patch_merge_type = model_args.mm_patch_merge_type
-
+    
+    if model_args.vision_tower is not None or model_type == "qwen2_vl":
+        # Load config and set multimodal parameters
+        config = ConfigClass.from_pretrained(model_args.model_name_or_path)
+        
+        # Configure vision-language parameters based on model type
+        if model_type == "qwen2_vl":
+            # Qwen2.5-VL has native multimodal architecture
+            config.tune_mm_mlp_adapter = getattr(model_args, "tune_mm_mlp_adapter", False)
+            config.freeze_mm_mlp_adapter = not config.tune_mm_mlp_adapter
+        else:
+            # Traditional Parsit vision-language setup for Qwen/EXAONE
+            if model_args.vision_tower:
+                config.mm_vision_tower = model_args.vision_tower
+            config.mm_projector_type = getattr(model_args, "mm_projector_type", "mlp2x_gelu")
+            config.mm_hidden_size = getattr(config, "mm_hidden_size", 1152)  # SigLIP hidden size
+            config.mm_vision_select_layer = model_args.mm_vision_select_layer
+            config.mm_vision_select_feature = model_args.mm_vision_select_feature
+            config.mm_patch_merge_type = model_args.mm_patch_merge_type
+        
+        # Load model with quantization support
         if training_args.bits in [4, 8]:
-            model = ParsitQwenForCausalLM.from_pretrained(
+            model = ModelClass.from_pretrained(
                 model_args.model_name_or_path,
                 config=config,
                 cache_dir=training_args.cache_dir,
@@ -301,7 +347,7 @@ def get_model(model_args, training_args, bnb_model_from_pretrained_args):
                 **bnb_model_from_pretrained_args
             )
         else:
-            model = ParsitQwenForCausalLM.from_pretrained(
+            model = ModelClass.from_pretrained(
                 model_args.model_name_or_path,
                 config=config,
                 cache_dir=training_args.cache_dir,
