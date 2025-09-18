@@ -2,11 +2,16 @@
 
 All notable changes to the Parsit project are documented in this file.
 
-## [Unreleased] - 2025-07-24
+## [Unreleased] - 2025-07-26
 
 ### 🔥 Critical Fixes
 
-#### **Latest Critical Fixes (2025-07-24)**
+#### **Latest Critical Fixes (2025-07-26)**
+- **FIXED: Single GPU training setup**: Resolved multi-GPU configuration errors on single GPU systems with auto-detection
+- **FIXED: Model identifier compatibility**: Updated to use correct Qwen3 model paths (Qwen/Qwen3-4B vs non-existent -Instruct variants)
+- **FIXED: NCCL configuration issues**: Improved distributed training initialization for various hardware setups
+
+#### **Previous Critical Fixes (2025-07-24)**
 - **FIXED: Checkpoint system improvements**: Enhanced checkpoint saving and loading reliability for consistent training resumption
 - **FIXED: Training state persistence**: Improved model state management to prevent checkpoint corruption during multi-GPU training
 - **FIXED: DeepSpeed checkpoint compatibility**: Resolved checkpoint format issues that caused training interruptions
@@ -33,7 +38,27 @@ All notable changes to the Parsit project are documented in this file.
 
 ### ✨ Major Features
 
-#### **Recent Major Improvements (2025-07-23)**
+#### **Recent Major Improvements (2025-07-26)**
+
+#### **Qwen3-4B Model Support**
+- **Added Qwen3-4B language model support**: Extended architecture to support 4B parameter models alongside existing 1.7B support
+- **Model-specific training scripts**: Created optimized training configurations for 4B models with appropriate hyperparameters
+- **Memory optimization for larger models**: Implemented CPU offloading and enhanced DeepSpeed configurations for 4B training
+- **Automatic model size detection**: Added intelligent model size selection in training scripts with `MODEL_SIZE` environment variable
+
+#### **Training Infrastructure Enhancements**
+- **Auto GPU detection**: Enhanced scripts with automatic GPU count detection and single-GPU fallback capabilities
+- **Optimized DeepSpeed configurations**: Created model-specific ZeRO-3 configurations with CPU offloading for memory efficiency
+- **Training parameter optimization**: Adjusted batch sizes, gradient accumulation, and learning rates for optimal 4B model training
+- **Hardware compatibility improvements**: Better support for various GPU configurations and memory constraints
+
+#### **Script and Configuration Updates**
+- **New training scripts**: Added `scripts/pretrain_4b.sh`, `scripts/finetune_4b.sh`, and `scripts/train_lora_4b.sh` for 4B model training
+- **Enhanced existing scripts**: Updated `scripts/pretrain.sh` with model size selection capabilities
+- **Improved error handling**: Better validation and fallback mechanisms for different hardware setups
+- **Documentation updates**: Updated README and documentation to reflect 4B model support and usage examples
+
+#### **Previous Major Improvements (2025-07-23)**
 
 #### **Multi-GPU Training Infrastructure**
 - **Enhanced distributed training support**: Comprehensive multi-GPU setup with proper parameter synchronization across ranks
@@ -140,14 +165,34 @@ with deepspeed.zero.GatheredParameters(params_to_unfreeze, modifier_rank=0):
 ### 📚 Documentation & Tooling
 
 #### New Tools
+- **Added Qwen3-4B test script** (`scripts/test_qwen3_4b.py`)
+  - Validates 4B model compatibility with Parsit architecture
+  - Tests model loading and configuration without requiring training data
+  - Provides compatibility verification for both 1.7B and 4B models
+
 - **Added dataset converter script** (`scripts/data_converter.py`)
   - Validates Parsit dataset format
   - Converts from LLaVA and ShareGPT formats
   - Supports both JSON and JSONL files
   - Auto-detection of dataset formats
 
+#### New Configuration Files
+- **Added 4B-specific DeepSpeed config** (`scripts/zero3_4b.json`)
+  - Optimized ZeRO-3 configuration with CPU offloading for 4B models
+  - Enhanced memory management for larger models
+  - Reduced parameter thresholds for single-GPU training
+
 #### Usage Examples
 ```bash
+# Test 4B model compatibility
+python scripts/test_qwen3_4b.py
+
+# Train with 4B model using environment variable
+MODEL_SIZE=4B bash scripts/pretrain.sh
+
+# Train with 4B model using dedicated script
+bash scripts/pretrain_4b.sh
+
 # Validate dataset format
 python scripts/data_converter.py --input data.json --validate-only
 

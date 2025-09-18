@@ -1,11 +1,11 @@
 # Parsit: Vision-Language Model for Document Analysis
 
-Parsit is a specialized vision-language model designed for document analysis tasks. It combines **Qwen3-1.7B language models** with **SigLIP vision encoders** to deliver high performance on OCR, question answering, and structured document understanding.
+Parsit is a specialized vision-language model designed for document analysis tasks. It combines **Qwen3 language models (1.7B, 4B)** with **SigLIP vision encoders** to deliver high performance on OCR, question answering, and structured document understanding.
 
 ## Features
 
 - **Document-Focused Architecture**: Tailored specifically for document analysis (no video or general vision tasks)
-- **Modern Components**: Qwen3-1.7B LLM + SigLIP vision encoder + MLP projector
+- **Modern Components**: Qwen3 LLM (1.7B/4B) + SigLIP vision encoder + MLP projector
 - **Flexible Training**: Supports full fine-tuning, LoRA, and multiple training modes
 - **Simple Inference**: Python API for document processing and structured text extraction
 - **Comprehensive Evaluation**: Built-in metrics for QA accuracy and OCR performance
@@ -68,13 +68,18 @@ processor.process_ocr_dataset(ocr_data, "ocr_dataset.json")
 
 ```bash
 # Pre-training (vision-language alignment)
-bash scripts/pretrain.sh
+bash scripts/pretrain.sh  # Default: 1.7B model
+MODEL_SIZE=4B bash scripts/pretrain.sh  # For 4B model
+
+# Model-specific scripts
+bash scripts/pretrain_4b.sh  # Optimized for 4B model
 
 # Fine-tuning (instruction following)
 bash scripts/finetune.sh
 
 # LoRA training (memory efficient)
-bash scripts/train_lora.sh
+bash scripts/train_lora.sh  # 1.7B model
+bash scripts/train_lora_4b.sh  # 4B model
 
 # Full document training
 bash scripts/train_parsit_documents.sh
@@ -83,15 +88,21 @@ bash scripts/train_parsit_documents.sh
 ## Model Architecture
 
 ```
-Document Image → SigLIP-2 Encoder → MLP Projector → Qwen3-1.7B LLM → Text Response
+Document Image → SigLIP-2 Encoder → MLP Projector → Qwen3 LLM → Text Response
 ```
 
 ### Components
 
 - **Vision Encoder**: SigLIP-2 (google/siglip-so400m-patch14-384)  
-- **Language Model**: Qwen3-1.7B-Instruct  
+- **Language Model**: Qwen3-1.7B or Qwen3-4B 
 - **Projector**: 2-layer MLP with GELU activation (`mlp2x_gelu`)  
 - **DeepSpeed**: ZeRO-2 and ZeRO-3 configurations for efficient training
+
+### Hardware Requirements
+
+- **1.7B Model**: 8GB+ VRAM, suitable for RTX 3070/4060 Ti
+- **4B Model**: 12GB+ VRAM, recommended RTX 3060 12GB/4070 or better
+- **Training**: Single GPU sufficient for both models with optimized configurations
 
 ## Evaluation
 
@@ -158,5 +169,5 @@ This project is released under a permissive open-source license.
 
 ## Acknowledgments
 
-- Uses [Qwen3-1.7B](https://huggingface.co/Qwen/Qwen3-1.7B-Instruct) language model  
+- Uses [Qwen3-1.7B](https://huggingface.co/Qwen/Qwen3-1.7B) and [Qwen3-4B](https://huggingface.co/Qwen/Qwen3-4B) language models  
 - Powered by [SigLIP-2](https://github.com/google-research/big_vision) vision encoder

@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Auto-detect GPU count or use environment variable
 if command -v nvidia-smi >/dev/null 2>&1; then
     DETECTED_GPUS=$(nvidia-smi --query-gpu=count --format=csv,noheader,nounits | head -1)
@@ -21,23 +23,7 @@ export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 # Remove CUDA_LAUNCH_BLOCKING for better performance in multi-GPU
 # export CUDA_LAUNCH_BLOCKING=1
 
-# # Check if running from repo root (should find 'parsit/pyproject.toml')
-# if [ ! -f "parsit/pyproject.toml" ]; then
-#   echo "Error: Please run this script from the repository root directory (where 'parsit/pyproject.toml' exists)."
-#   exit 1
-# fi
-
-# Model size selection: set MODEL_SIZE to "1.7B" or "4B"
-MODEL_SIZE="${MODEL_SIZE:-1.7B}"
-
-if [ "$MODEL_SIZE" == "4B" ]; then
-    LLM_VERSION="Qwen/Qwen3-4B"
-    echo "Using Qwen3-4B model"
-else
-    LLM_VERSION="Qwen/Qwen3-1.7B"
-    echo "Using Qwen3-1.7B model (default)"
-fi
-
+LLM_VERSION="Qwen/Qwen3-4B"
 LLM_VERSION_CLEAN="${LLM_VERSION//\//_}"
 VISION_MODEL_VERSION="google/siglip2-so400m-patch14-384"
 VISION_MODEL_VERSION_CLEAN="${VISION_MODEL_VERSION//\//_}"
@@ -49,25 +35,10 @@ PROMPT_VERSION=plain
 BASE_RUN_NAME="parsit-${VISION_MODEL_VERSION_CLEAN}-${LLM_VERSION_CLEAN}-mlp2x_gelu-pretrain_blip558k_plain"
 echo "BASE_RUN_NAME: ${BASE_RUN_NAME}"
 
-
 # Get absolute paths
 REPO_ROOT="$(pwd)"
 TRAIN_SCRIPT="$REPO_ROOT/parsit/train/train.py"
-
-# Select DeepSpeed config and training params based on model size
-if [ "$MODEL_SIZE" == "4B" ]; then
-    DEEPSPEED_CONFIG="$REPO_ROOT/scripts/zero3_4b.json"
-    BATCH_SIZE=1
-    GRAD_ACCUM=4
-    LEARNING_RATE=8e-4
-    EVAL_BATCH_SIZE=2
-else
-    DEEPSPEED_CONFIG="$REPO_ROOT/scripts/zero3.json"
-    BATCH_SIZE=1
-    GRAD_ACCUM=2
-    LEARNING_RATE=1e-3
-    EVAL_BATCH_SIZE=4
-fi
+DEEPSPEED_CONFIG="$REPO_ROOT/scripts/zero3_4b.json"
 DATA_PATH="$REPO_ROOT/mlp-projector-pretrain/blip_laion_cc_sbu_558k_subset_5k.json" 
 IMAGE_FOLDER="$REPO_ROOT/mlp-projector-pretrain/images"
 
@@ -87,12 +58,12 @@ torchrun --standalone --nproc_per_node=$NUM_GPUS \
     --bf16 True \
     --output_dir "/checkpoints/projectors/${BASE_RUN_NAME}" \
     --num_train_epochs 1 \
-    --per_device_train_batch_size $BATCH_SIZE \
-    --per_device_eval_batch_size $EVAL_BATCH_SIZE \
-    --gradient_accumulation_steps $GRAD_ACCUM \
+    --per_device_train_batch_size 1 \
+    --per_device_eval_batch_size 2 \
+    --gradient_accumulation_steps 4 \
     --save_strategy "steps" \
     --save_steps 500 \
-    --learning_rate $LEARNING_RATE \
+    --learning_rate 8e-4 \
     --weight_decay 0. \
     --warmup_ratio 0.03 \
     --lr_scheduler_type "cosine" \
@@ -101,7 +72,7 @@ torchrun --standalone --nproc_per_node=$NUM_GPUS \
     --tf32 True \
     --model_max_length 8192 \
     --gradient_checkpointing True \
-    --dataloader_num_workers 12 \
+    --dataloader_num_workers 8 \
     --lazy_preprocess True \
     --report_to wandb \
     --run_name "$BASE_RUN_NAME" \
@@ -113,4 +84,4 @@ if [ $? -ne 0 ]; then
   exit 2
 fi
 
-# You can delete the sdpa attn_implementation if you want to use flash attn
+echo "Training completed successfully for Qwen3-4B!"
